@@ -141,6 +141,8 @@ select,input[type=text],input[type=search],input[type=number],input[type=time],i
 .seg button[aria-pressed="true"][data-s="out"]{background:var(--bad-bg);color:var(--bad)}
 .pricein{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .pricein input{width:110px;min-height:38px;padding:6px 10px}
+#ask-out .ord{gap:4px}
+.row small.eq{color:var(--warn);font-weight:600}
 #histbox .acts label{flex:1 1 140px}
 details>summary{cursor:pointer;font:700 20px/1.2 var(--display)}
 form.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end}
@@ -341,6 +343,13 @@ input[type=file]{font-size:14px;max-width:100%}
       </div>
     </div>
 
+    <div class="panel" id="askbox">
+      <h2 data-i18n="askTitle"></h2>
+      <form class="acts" id="askform"><input type="text" id="ask-q" autocomplete="off" style="flex:1 1 200px;width:auto"><button class="btn primary" type="submit" data-i18n="askBtn"></button></form>
+      <div class="chips" id="ask-ex"></div>
+      <div class="stack" id="ask-out" aria-live="polite"></div>
+    </div>
+
     <form class="panel hl" id="order" hidden>
       <h2 id="od-title"></h2>
       <div class="stack">
@@ -398,6 +407,11 @@ input[type=file]{font-size:14px;max-width:100%}
     <div class="panel">
       <h2 data-i18n="salesTitle"></h2>
       <div class="stack" id="salesbox"></div>
+    </div>
+    <div class="panel" id="phmiss" hidden>
+      <h2 data-i18n="missTitlePh"></h2>
+      <p data-i18n="missHelpPh"></p>
+      <div id="phmiss-list"></div>
     </div>
     <div id="hist-ph"></div>
   </section>
@@ -686,6 +700,43 @@ invPh:["Pharmacie","Farmasi","Duka la dawa","Pharmacy"],invCl:["Client","Client"
 invAddr:["Adresse de livraison","Adresi ya livraison","Anwani ya kupeleka","Delivery address"],
 invProduct:["Produit","Kisi","Bidhaa","Product"],invQty:["Qté","Motango","Idadi","Qty"],invUnit:["Prix unitaire","Ntalo ya moko","Bei ya kimoja","Unit price"],
 invLine:["Total","Nyonso","Jumla","Total"],invFee:["Livraison","Livraison","Usafirishaji","Delivery"],
+sameMol:["même molécule : vérifiez le dosage avec le pharmacien","molécule moko : tuna farmasie dosage","dawa ileile: hakikisha kipimo na mfamasia","same molecule: check the dose with the pharmacist"],
+hintEq:["Équivalents de même molécule aussi affichés : {b}.","Bakisi ya molécule moko ezali mpe: {b}.","Dawa za aina moja pia zinaonyeshwa: {b}.","Same-molecule equivalents also shown: {b}."],
+askTitle:["Demander à Kisi","Tuna Kisi","Uliza Kisi","Ask Kisi"],askBtn:["Demander","Tuna","Uliza","Ask"],
+askPh:["Ex. Pharmacie ouverte à {c} ?","Ndakisa: Farmasi efungwami na {c}?","Mfano: Duka liko wazi {c}?","E.g. Pharmacy open in {c}?"],
+askEx1:["Pharmacie ouverte à {c} ?","Farmasi efungwami na {c}?","Duka liko wazi {c}?","Pharmacy open in {c}?"],
+askEx2:["Pharmacies de garde","Bafarmasi ya garde","Maduka ya zamu","Pharmacies on duty"],
+askEx3:["{p} est ouverte ?","{p} efungwami?","{p} iko wazi?","Is {p} open?"],
+askMed:["Je ne peux pas donner de conseil médical. Demandez à un pharmacien ou à un médecin.","Nakoki kopesa toli ya monganga te. Tuna farmasie to monganga.","Siwezi kutoa ushauri wa kitabibu. Uliza mfamasia au daktari.","I can't give medical advice. Ask a pharmacist or a doctor."],
+askNamed:["Voici ses horaires :","Ngonga na yango:","Saa zake:","Its opening hours:"],
+askOpenIn:["Pharmacies ouvertes maintenant à {c} :","Bafarmasi efungwami sikoyo na {c}:","Maduka yaliyo wazi sasa {c}:","Pharmacies open now in {c}:"],
+askNoneIn:["Aucune pharmacie n'est ouverte maintenant à {c}. Les plus proches qui sont ouvertes :","Farmasi moko te efungwami sikoyo na {c}. Oyo ya pene efungwami:","Hakuna duka lililo wazi sasa {c}. Yaliyo karibu na wazi:","No pharmacy is open now in {c}. The nearest open ones:"],
+askNoneAt:["Aucune pharmacie de {c} n'est encore sur Kisi. Les plus proches qui sont ouvertes :","Farmasi moko te ya {c} ezali naino na Kisi. Oyo ya pene efungwami:","Hakuna duka la {c} kwenye Kisi bado. Yaliyo karibu na wazi:","No pharmacy in {c} is on Kisi yet. The nearest open ones:"],
+askGuard:["Pharmacies de garde :","Bafarmasi ya garde:","Maduka ya zamu:","Pharmacies on duty:"],
+askNoGuard:["Aucune pharmacie de garde n'est indiquée. Pharmacies ouvertes 24 h/24 :","Farmasi ya garde ezali te. Bafarmasi efungwamaka ngonga 24:","Hakuna duka la zamu. Maduka ya saa 24:","No pharmacy on duty is listed. Pharmacies open 24 hours:"],
+askOpenNow:["Pharmacies ouvertes maintenant :","Bafarmasi efungwami sikoyo:","Maduka yaliyo wazi sasa:","Pharmacies open now:"],
+askNoneOpen:["Aucune pharmacie n'est ouverte maintenant.","Farmasi moko te efungwami sikoyo.","Hakuna duka lililo wazi sasa.","No pharmacy is open now."],
+askSearch:["J'ai lancé la recherche de « {q} » : les pharmacies qui l'ont sont affichées plus bas.","Naluki « {q} »: bafarmasi oyo ezali na yango ezali na se.","Nimetafuta « {q} »: maduka yaliyo nayo yako chini.","I searched for “{q}”: the pharmacies that have it are shown below."],
+askUnknown:["Je réponds aux questions sur les pharmacies : horaires, pharmacies ouvertes ou de garde. Exemple : « Pharmacie ouverte à Lemba ? »","Nayanolaka mituna na ntina ya bafarmasi: ngonga, oyo efungwami to ya garde. Ndakisa: « Farmasi efungwami na Lemba? »","Ninajibu maswali kuhusu maduka: saa, yaliyo wazi au ya zamu. Mfano: « Duka liko wazi Lemba? »","I answer questions about pharmacies: hours, open or on duty. Example: “Pharmacy open in Lemba?”"],
+closesAt:["ferme à {h}","ekangama na {h}","inafunga saa {h}","closes at {h}"],opensAt:["ouvre à {h}","efungwama na {h}","inafungua saa {h}","opens at {h}"],
+opensTomorrow:["ouvre demain à {h}","efungwama lobi na {h}","inafungua kesho saa {h}","opens tomorrow at {h}"],
+missTitlePh:["Ce que les clients cherchent sans trouver près de vous","Oyo ba client balukaka kozwa te pene na yo","Wateja wanachotafuta bila kupata karibu nawe","What customers look for without finding it near you"],
+missHelpPh:["Recherches des 90 derniers jours dans votre commune. Pensez à ajouter ces produits à votre stock.","Botali ya mikolo 90 eleki na komine na yo. Bakisa bakisi oyo na stock na yo.","Utafutaji wa siku 90 zilizopita katika komine yako. Ongeza bidhaa hizi kwenye stoki.","Searches from the last 90 days in your commune. Consider adding these products to your stock."],
+adMiss:["Demandes","Bisengeli","Maombi","Requests"],
+missTitleAd:["Recherches sans résultat (90 derniers jours)","Botali oyo ezwi eloko te (mikolo 90)","Utafutaji bila matokeo (siku 90)","Searches without a result (last 90 days)"],
+missHelpAd:["Ce que les clients cherchent sans le trouver, par commune : produit absent du catalogue, ou en rupture dans toutes les pharmacies.","Oyo ba client balukaka bazwi te, na komine: kisi ezali te na catalogue, to esili na bafarmasi nyonso.","Wateja wanachotafuta bila kupata, kwa komine: bidhaa haipo kwenye orodha, au imeisha kila duka.","What customers look for without finding it, by commune: not in the catalogue, or out of stock everywhere."],
+missUnknown:["Pas dans le catalogue","Ezali te na catalogue","Haipo kwenye orodha","Not in the catalogue"],missOut:["En rupture partout","Esili bisika nyonso","Imeisha kila mahali","Out of stock everywhere"],
+missAll:["Toutes communes","Bakomine nyonso","Komine zote","All communes"],missTimes:["{n} fois","mbala {n}","mara {n}","{n} times"],
+missNone:["Aucune recherche sans résultat pour l'instant.","Botali oyo ezwi eloko te ezali te sikoyo.","Hakuna utafutaji usio na matokeo kwa sasa.","No search without a result yet."],
+susTitle:["Comptes à surveiller","Ba compte ya kokengela","Akaunti za kufuatilia","Accounts to watch"],
+susNote:["Ce sont des signaux, pas des preuves : vérifiez avant de décider.","Oyo ezali bilembo, ezali bilembeteli te: tala liboso ya kozwa mokano.","Hizi ni ishara, si ushahidi: kagua kabla ya kuamua.","These are signals, not proof: check before deciding."],
+susNone:["Aucun compte suspect pour l'instant.","Compte ya likama ezali te sikoyo.","Hakuna akaunti ya kutiliwa shaka kwa sasa.","No suspicious account for now."],
+susTag:["À vérifier","Ya kotala","Ya kukagua","To check"],
+susSame:["Même nom et même date de naissance","Nkombo moko mpe mokolo ya mbotama moko","Jina moja na tarehe moja ya kuzaliwa","Same name and same date of birth"],
+susId:["Même photo de pièce d'identité","Foto moko ya mokanda ya identité","Picha moja ya kitambulisho","Same ID document photo"],
+susCancel:["{n} commandes annulées sur {m}","Ba commande {n} eboma na {m}","Maagizo {n} yamefutwa kati ya {m}","{n} of {m} orders cancelled"],
+susRefuse:["{n} commandes refusées sur {m}","Ba commande {n} eboyami na {m}","Maagizo {n} yamekataliwa kati ya {m}","{n} of {m} orders declined"],
+susRating:["Note moyenne {a}/5 sur {n} avis","Note {a}/5 na ba avis {n}","Alama {a}/5 kwa maoni {n}","Average rating {a}/5 from {n} ratings"],
 approx:["approximative","ya pene","ya makadirio","approximate"],placed:["placée par vous","otie yango","umeiweka","placed by you"]
 };
 
@@ -714,7 +765,7 @@ const SEED_PR=[["paracetamol","Paracétamol 500 mg",1000,0],["amoxicilline","Amo
  ["albendazole","Albendazole 400 mg",1200,0],["metformine","Metformine 500 mg",4500,1],["amlodipine","Amlodipine 5 mg",5500,1],
  ["insuline","Insuline NPH 10 ml",28000,1],["salbutamol","Salbutamol inhalateur",9000,1],["vitc","Vitamine C 500 mg",1500,0]];
 const POPULAR=["paracetamol","al","quinine","amoxicilline","sro","insuline"];
-const KEY="kisi.v9";
+const KEY="kisi.v10";
 
 function hash(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return x>>>0}
 function seed(){
@@ -744,9 +795,11 @@ function seed(){
     o.code="KIS-"+new Date(t0).toISOString().slice(2,10).replace(/-/g,"")+"-000"+n; Object.assign(o,{courier:"c1",rating,log:{pending:t0,confirmed:t0+600000,picked:t0+900000,received:t0+2700000,done:t0+3000000}}); return o};
   od.push(old(6,45,"quinine",2,us[0],"Lingwala","cash",5), old(7,200,"amoxicilline",1,us[0],"Gombe","mm",4));
   const links=[{cr:"c1",ph:"p1",status:"accepted"},{cr:"c1",ph:"p5",status:"pending"},{cr:"c2",ph:"p6",status:"accepted"},{cr:"c2",ph:"p5",status:"pending"},{cr:"c3",ph:"p2",status:"accepted"}];
-  return {lang:"fr",ph,pr,st,cr,od,us,links,seq:7};
+  const missRaw=[["Coartem sirop","unknown","Lemba",3],["Ventoline","out","Gombe",2],["Fer acide folique","unknown","Kalamu",4],["Insuline rapide","unknown","",2],["Quinine injectable","unknown","Gombe",1]]
+    .flatMap(([q,kind,commune,k])=>Array.from({length:k},(_,i)=>({q,kind,commune,t:now-(i*3+1)*86400000})));
+  return {lang:"fr",ph,pr,st,cr,od,us,links,seq:7,missRaw};
 }
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.ph&&s.pr&&s.st&&s.cr&&s.od&&s.us&&s.links)return s}catch(e){}return seed()}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.ph&&s.pr&&s.st&&s.cr&&s.od&&s.us&&s.links&&s.missRaw)return s}catch(e){}return seed()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 let S=load(), q="", openCards=new Set(), resetArmed=false, orderPh=null, pick=null, pickManual=false;
@@ -880,12 +933,12 @@ function fillSelects(){
   const w=who(); if(w&&w.role==="ph")$("mph").value=w.x.id; if(w&&w.role==="cr")$("mcr").value=w.x.id;
   keep($("od-pay"),'<option value="cash">'+esc(tr("payCash"))+'</option><option value="mm">'+esc(tr("payMM"))+"</option>");
 }
-function renderAll(){setTimeout(renderHist,0);fillSelects();renderChips();renderSession();renderResults();renderOrderForm();renderMyOrders();renderNear();renderPick();renderPh();renderSales();renderCr();renderAdmin()}
+function renderAll(){setTimeout(()=>{renderHist();renderAsk();renderPhMiss()},0);fillSelects();renderChips();renderSession();renderResults();renderOrderForm();renderMyOrders();renderNear();renderPick();renderPh();renderSales();renderCr();renderAdmin()}
 function renderChips(){
   $("chips").innerHTML=POPULAR.map(id=>{const r=prod(id);return r?'<button type="button" data-chip="'+esc(r.name)+'">'+esc(r.name)+"</button>":""}).join("");
 }
 function prodRow(p,r){const s=stock(p.id,r.id);
-  return '<div class="row"><div>'+esc(r.name)+(r.rx?'<span class="rx" title="'+esc(tr("rx"))+'">Rx</span>':"")+(s.u?"<small>"+esc(ago(s.u))+"</small>":"")+
+  return '<div class="row"><div>'+esc(r.name)+(r.rx?'<span class="rx" title="'+esc(tr("rx"))+'">Rx</span>':"")+(q&&lastSmart.equiv&&lastSmart.equiv.has(r.id)?'<small class="eq">'+esc(tr("sameMol"))+"</small>":"")+(s.u?"<small>"+esc(ago(s.u))+"</small>":"")+
     '</div><span class="pr">'+(s.s==="out"?"":money(s.p))+'</span><span class="pill '+pillCls[s.s]+'">'+esc(tr(s.s))+"</span></div>"}
 // ---- smart search: typing mistakes, brand names, everyday words
 const SYN={doliprane:"paracetamol",efferalgan:"paracetamol",dafalgan:"paracetamol",panadol:"paracetamol",acetaminophen:"paracetamol",
@@ -926,11 +979,13 @@ function smartSearch(raw){
     if(sc>best){best=sc;list=[r]}else if(sc&&sc===best)list.push(r)});
   return best?{list,hint:{k:"hintFuzzy",v:{a:raw.trim(),b:list.map(r=>r.name).join(", ")}}}:{list:[],hint:null};
 }
-function matchedProducts(){if(lastSmart.q!==q||lastSmart.n!==S.pr.length){lastSmart=Object.assign({q,n:S.pr.length},smartSearch(q))}return lastSmart.list}
+function matchedProducts(){if(lastSmart.q!==q||lastSmart.n!==S.pr.length){const r=smartSearch(q), mols=new Set(r.list.map(molecule).filter(Boolean)), eq=S.pr.filter(p=>!r.list.includes(p)&&mols.has(molecule(p)));
+  lastSmart=Object.assign({q,n:S.pr.length},r,{list:r.list.concat(eq),equiv:new Set(eq.map(p=>p.id))})}return lastSmart.list}
 function renderResults(){
   const nq=norm(q.trim()), commune=$("commune").value, onlyOpen=$("opennow").checked, onlyDel=$("delonly").checked;
   const matched=matchedProducts(), hint=lastSmart.hint;
-  $("search-hint").hidden=!(nq&&hint); if(nq&&hint)$("search-hint").textContent=tr(hint.k,hint.v);
+  const eqTxt=nq&&lastSmart.equiv&&lastSmart.equiv.size?tr("hintEq",{b:eqNames()}):"";
+  $("search-hint").hidden=!(nq&&(hint||eqTxt)); if(nq&&(hint||eqTxt))$("search-hint").textContent=[hint?tr(hint.k,hint.v):"",eqTxt].filter(Boolean).join(" ");
   const adm=isAdmin();
   let list=S.ph.filter(p=>(p.verified||adm)&&(!commune||p.commune===commune)&&(!onlyOpen||isOpen(p))&&(!onlyDel||p.delivery));
   const rank={in:0,low:1,out:2}, best={};
@@ -938,6 +993,7 @@ function renderResults(){
     list.forEach(p=>{let b=null;matched.forEach(r=>{const s=stock(p.id,r.id);if(!b||rank[s.s]<rank[b.s]||(rank[s.s]===rank[b.s]&&s.p<b.p))b=s});best[p.id]=b});
     list=matched.length?list.sort((a,b)=>rank[best[a.id].s]-rank[best[b.id].s]||best[a.id].p-best[b.id].p):[];
   }
+  if(nq.length>=3&&me())scheduleMiss(q,!matched.length?"unknown":!S.ph.some(p=>(p.verified||adm)&&matched.some(r=>stock(p.id,r.id).s!=="out"))?"out":null);
   $("count").textContent=tr("count",{n:list.length});
   if(!list.length){$("results").innerHTML='<div class="empty">'+esc(nq&&!matched.length?tr("noProduct"):tr("noResult"))+"</div>"}
   else $("results").innerHTML=list.map(p=>{
@@ -950,7 +1006,7 @@ function renderResults(){
       '<p class="meta">'+esc(p.commune)+" · "+esc(p.address)+"<br>"+esc(hours)+(nq?"":" · "+esc(tr("avail",{n})))+"</p>"+
       '<div class="tags"><span class="pill '+(p.verified?"ok":"warn")+'">'+esc(p.verified?tr("verified"):tr("pendingV"))+"</span>"+
       (p.delivery?'<span class="pill plain">'+esc(tr("delivers"))+"</span>":"")+"</div>"+
-      (nq?'<div class="rows">'+matched.slice(0,4).map(r=>prodRow(p,r)).join("")+"</div>":"")+
+      (nq?'<div class="rows">'+matched.slice(0,6).map(r=>prodRow(p,r)).join("")+"</div>":"")+
       '<div class="phone"><span class="num">'+esc(p.phone)+"</span>"+
       (n&&me()?'<button class="btn primary" type="button" data-order="'+p.id+'">'+esc(tr("order"))+"</button>":"")+
       '<a class="btn'+(n&&me()?"":" primary")+'" href="'+esc(wa(p.phone,tr("waMsg",{p:p.name})))+'" target="_blank" rel="noopener">'+esc(tr("call"))+
@@ -1183,9 +1239,9 @@ function renderCr(){
 }
 
 /* ---------- admin ---------- */
-const AD=[["home","adHome"],["ph","adPh"],["cr","adCr"],["us","adUs"],["od","adOd"],["prod","adCat"]];
+const AD=[["home","adHome"],["ph","adPh"],["cr","adCr"],["us","adUs"],["od","adOd"],["miss","adMiss"],["prod","adCat"]];
 function renderAdmin(){
-  const cnt={ph:S.ph.length,cr:S.cr.length,us:S.us.length,od:S.od.length,prod:S.pr.length};
+  const cnt={ph:S.ph.length,cr:S.cr.length,us:S.us.length,od:S.od.length,miss:misses().length,prod:S.pr.length};
   $("adnav").innerHTML=AD.map(a=>'<button type="button" data-ad="'+a[0]+'" aria-pressed="'+(adTab===a[0])+'">'+esc(tr(a[1]))+(cnt[a[0]]!=null?"<span>"+cnt[a[0]]+"</span>":"")+"</button>").join("");
   $("adprod").hidden=adTab!=="prod";
   const idt=x=>x.idType?tr("id_"+x.idType):"";
@@ -1210,10 +1266,11 @@ function renderAdmin(){
     const pend=S.ph.filter(x=>!x.verified).map(phL).concat(S.cr.filter(x=>!x.verified).map(crL),S.us.filter(x=>!x.verified).map(usL));
     h='<div class="tiles">'+tile("ph",S.ph.length,tr("adPh"),pe(S.ph)?tr("nPend",{n:pe(S.ph)}):"")+tile("cr",S.cr.length,tr("adCr"),pe(S.cr)?tr("nPend",{n:pe(S.cr)}):"")+
       tile("us",S.us.length,tr("adUs"),pe(S.us)?tr("nPend",{n:pe(S.us)}):"")+tile("od",S.od.length,tr("adOd"),act?tr("nActive",{n:act}):"")+"</div>"+
-      panel(tr("toVerify"),pend.length?pend.join(""):'<div class="empty">'+esc(tr("nothingV"))+"</div>")+
+      panel(tr("toVerify"),pend.length?pend.join(""):'<div class="empty">'+esc(tr("nothingV"))+"</div>")+susPanel()+
       panel(tr("phConn")+" ("+S.ph.length+")",S.ph.slice().sort((a,b)=>a.commune.localeCompare(b.commune)).map(p=>'<div class="row"><div><b>'+esc(p.name)+"</b></div><span>"+esc(p.commune)+
         '</span><span class="pill '+(p.verified?"ok":"warn")+'">'+esc(tr(p.verified?"verified":"pendingV"))+"</span></div>").join(""));
   }
+  if(adTab==="miss")h='<div class="panel"><h2>'+esc(tr("missTitleAd"))+"</h2><p>"+esc(tr("missHelpAd"))+"</p>"+missRows(misses())+"</div>";
   if(adTab==="ph"){const cs=[...new Set(S.ph.map(p=>p.commune))].sort(), l=S.ph.filter(p=>!adPhC||p.commune===adPhC);
     h=panel(tr("adPh")+" ("+l.length+")",'<select id="ad-phc" data-phc aria-label="Commune"><option value="">'+esc(tr("allCommunes"))+"</option>"+
       cs.map(c=>"<option"+(c===adPhC?" selected":"")+">"+esc(c)+"</option>").join("")+"</select>"+l.map(phL).join(""))}
@@ -1473,6 +1530,82 @@ document.addEventListener("click",e=>{const b=e.target.closest?e.target.closest(
   if(b.dataset.hist==="show"){hist.from=$("hist-from").value;hist.to=$("hist-to").value;
     if(hist.from&&hist.from<yearAgo())toast(tr("histMax"));hist.shown=true;renderHist()}
   if(b.dataset.hist==="dl"){const {f,t}=histRange();saveFile("factures-kisi-"+f+"_"+t+".html",invoiceHtml(w),"text/html;charset=utf-8")}});
+
+/* ===== generics, ask Kisi, searches without result, accounts to watch ===== */
+Object.assign(SYN,{ospamox:"amoxicilline",ciflox:"ciprofloxacine",humulin:"insuline",insulatard:"insuline",oralyte:"sro",perfalgan:"paracetamol",nifluril:"",
+  amlodipin:"amlodipine",paracetamol:"paracetamol"}); delete SYN.nifluril;
+const MOLS=["paracetamol","ibuprofene","amoxicilline","artemether","quinine","metronidazole","ciprofloxacine","albendazole","metformine","amlodipine","insuline","salbutamol","zinc","sro","aspirine","diclofenac","cotrimoxazole","mebendazole","omeprazole","doxycycline","artesunate"];
+function molecule(r){for(const t of toks(r.name)){if(SYN[t])return SYN[t];const m=MOLS.find(x=>t===x||(t.length>=5&&t.startsWith(x)));if(m)return m}return null}
+function eqNames(){return S.pr.filter(r=>lastSmart.equiv&&lastSmart.equiv.has(r.id)).map(r=>r.name).join(", ")}
+function strHash(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return (x>>>0).toString(16)}
+
+/* ----- ask Kisi: opening hours, open now, on duty ----- */
+let askQ="";
+const ASK_STOP=new Set(["pharmacie","pharmacy","farmasi","duka","dawa","ouverte","ouvert","open","sainte","saint"]);
+function whenTxt(p){if(p.h24)return "";if(isOpen(p))return tr("closesAt",{h:hm(p.c)});return kinNow()<p.o?tr("opensAt",{h:hm(p.o)}):tr("opensTomorrow",{h:hm(p.o)})}
+function askAnswer(raw){
+  const n=" "+norm(raw).replace(/[^a-z0-9]+/g," ")+" ", words=toks(raw), adm=isAdmin(), phs=S.ph.filter(p=>p.verified||adm);
+  if(!words.length)return null;
+  if(/ (dose|dosage|posologie|combien de comprimes?|symptomes?|diagnostic|enceinte|grossesse|bebe|nourrisson|effets? secondaires?|que prendre|quoi prendre|soigner|guerir|traitement|pregnant|symptoms?) /.test(n))return {k:"askMed"};
+  const hit=(w)=>words.some(t=>t===w||(w.length>=6&&near(t,w)));
+  const comTok=new Set(CNAMES.flatMap(c=>toks(c)));
+  const named=phs.filter(p=>toks(p.name).some(w=>w.length>=4&&!ASK_STOP.has(w)&&!comTok.has(w)&&hit(w)));
+  if(named.length)return {k:"askNamed",list:named.slice(0,3)};
+  const com=CNAMES.filter(c=>toks(c).every(w=>hit(w))).sort((a,b)=>b.length-a.length)[0];
+  const openNow=phs.filter(isOpen), byDist=(list,c)=>{const m=COM[c];return m?list.slice().sort((a,b)=>dist(m[0],m[1],a.lat,a.lng)-dist(m[0],m[1],b.lat,b.lng)):list};
+  if(/ (garde|zamu|duty) /.test(n)){const g=phs.filter(p=>p.guard);return g.length?{k:"askGuard",list:com?byDist(g,com):g}:{k:"askNoGuard",list:phs.filter(p=>p.h24)}}
+  if(com&&com!=="Kinshasa"){const inC=phs.filter(p=>p.commune===com), op=inC.filter(isOpen);
+    if(op.length)return {k:"askOpenIn",v:{c:com},list:op};
+    if(!openNow.length)return {k:"askNoneOpen",list:[]};
+    return {k:inC.length?"askNoneIn":"askNoneAt",v:{c:com},list:byDist(openNow,com).slice(0,3)}}
+  if(/ (ouvert|ouverte|ouvertes|open|maintenant|nuit|soir|efungwami|efungwama|wazi|fungua|sasa|now|tonight|24) /.test(n)||com)
+    return openNow.length?{k:"askOpenNow",list:openNow.slice(0,6)}:{k:"askNoneOpen",list:[]};
+  if(smartSearch(raw).list.length){q=raw;$("q").value=raw;renderResults();return {k:"askSearch",v:{q:raw.trim()}}}
+  return {k:"askUnknown"};
+}
+function renderAsk(){
+  const box=$("askbox"); if(!box)return; box.hidden=!who(); if(box.hidden)return;
+  $("ask-q").placeholder=tr("askPh",{c:"Lemba"});
+  const ph=S.ph.find(p=>p.verified&&!/^\d/.test(p.name.replace(/^Pharmacie\s+/i,"")));
+  const ex=[tr("askEx1",{c:"Lemba"}),tr("askEx2")].concat(ph?[tr("askEx3",{p:ph.name.replace(/^Pharmacie\s+/i,"")})]:[]);
+  $("ask-ex").innerHTML=ex.map(x=>'<button type="button" data-ask="'+esc(x)+'">'+esc(x)+"</button>").join("");
+  const a=askQ?askAnswer(askQ):null; if(!a){$("ask-out").innerHTML="";return}
+  $("ask-out").innerHTML='<div class="note" style="color:var(--ink);background:var(--accent-soft)">'+esc(tr(a.k,a.v))+"</div>"+(a.list||[]).map(p=>'<div class="ord"><div class="head"><b>'+esc(p.name)+"</b>"+openPill(p)+
+    '</div><div class="meta">'+esc(p.commune)+" · "+esc(hoursOf(p))+(whenTxt(p)?" · "+esc(whenTxt(p)):"")+(p.guard?" · "+esc(tr("guard")):"")+
+    '</div><div class="acts"><a class="btn" href="'+mapUrl(p)+'" target="_blank" rel="noopener">'+esc(tr("map"))+"</a></div></div>").join("");
+}
+$("askform").addEventListener("submit",e=>{e.preventDefault();askQ=$("ask-q").value.trim();renderAsk()});
+$("ask-ex").addEventListener("click",e=>{const b=e.target.closest("[data-ask]");if(!b)return;askQ=b.dataset.ask;$("ask-q").value=askQ;renderAsk()});
+
+/* ----- searches without result ----- */
+let missT=null; const missSent=new Set();
+function scheduleMiss(qq,kind){clearTimeout(missT);if(!kind)return;missT=setTimeout(()=>{const key=norm(qq.trim())+"|"+kind;if(missSent.has(key))return;missSent.add(key);
+  const rec={q:qq.trim(),kind,commune:$("commune").value||""};
+  if(typeof api==="function"){try{fetch("api.php?a=miss",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(rec)})}catch(e){}}
+  else{S.missRaw=(S.missRaw||[]).concat([Object.assign(rec,{t:Date.now()})]).slice(-500);save()}},1500)}
+function aggMisses(raw){const m={},lim=Date.now()-90*86400000;
+  raw.filter(x=>x.t>=lim).forEach(x=>{const k=norm(x.q)+"|"+x.kind+"|"+x.commune;const a=m[k]=m[k]||{q:x.q,kind:x.kind,commune:x.commune,n:0,last:0};a.n++;if(x.t>a.last){a.last=x.t;a.q=x.q}});
+  return Object.values(m).sort((a,b)=>b.n-a.n||b.last-a.last)}
+const misses=()=>S.misses||aggMisses(S.missRaw||[]);
+function missRows(list){return list.length?'<div class="stack">'+list.map(x=>'<div class="arow"><div><b>'+esc(x.q)+'</b><br><span class="meta">'+esc(x.commune||tr("missAll"))+" · "+esc(fmtT(x.last))+
+  '</span></div><div class="badges"><span class="pill '+(x.kind==="out"?"warn":"bad")+'">'+esc(tr(x.kind==="out"?"missOut":"missUnknown"))+'</span><span class="pill plain">'+esc(tr("missTimes",{n:x.n}))+"</span></div></div>").join("")+"</div>"
+  :'<div class="empty">'+esc(tr("missNone"))+"</div>"}
+function renderPhMiss(){const w=who(), box=$("phmiss"); if(!box)return; box.hidden=!(w&&w.role==="ph"); if(box.hidden)return;
+  $("phmiss-list").innerHTML=missRows(misses().filter(x=>!x.commune||x.commune===w.x.commune).slice(0,10))}
+
+/* ----- accounts to watch (admin) ----- */
+function suspects(){
+  const out=[], P=S.us.map(x=>({k:"us",x,role:tr("role_client")})).concat(S.cr.map(x=>({k:"cr",x,role:tr("role_cr")}))), A=P.concat(S.ph.map(x=>({k:"ph",x,role:tr("role_ph")})));
+  const grp=(arr,f)=>{const m={};arr.forEach(a=>{const k=f(a);if(k)(m[k]=m[k]||[]).push(a)});return Object.values(m).filter(g=>g.length>1)};
+  grp(P,a=>a.x.dob?norm(a.x.name).replace(/\s+/g," ").trim()+"|"+a.x.dob:null).forEach(g=>out.push({r:tr("susSame"),g}));
+  grp(A,a=>a.x.idHash||(a.x.idImg&&String(a.x.idImg).startsWith("data:")?strHash(a.x.idImg):null)).forEach(g=>out.push({r:tr("susId"),g}));
+  S.us.forEach(u=>{const o=S.od.filter(x=>x.user===u.id), c=o.filter(x=>x.status==="cancelled").length;if(c>=3&&c/o.length>=0.5)out.push({r:tr("susCancel",{n:c,m:o.length}),g:[{x:u,role:tr("role_client")}]})});
+  S.ph.forEach(p=>{const o=S.od.filter(x=>x.ph===p.id), c=o.filter(x=>x.status==="refused").length;if(c>=3&&c/o.length>=0.5)out.push({r:tr("susRefuse",{n:c,m:o.length}),g:[{x:p,role:tr("role_ph")}]})});
+  S.cr.forEach(c=>{const st=crStats(c.id);if(st.n>=3&&st.avg<2.5)out.push({r:tr("susRating",{a:st.avg.toFixed(1),n:st.n}),g:[{x:c,role:tr("role_cr")}]})});
+  return out}
+function susPanel(){const l=suspects();
+  return '<div class="panel"><h2>'+esc(tr("susTitle"))+" ("+l.length+")</h2><p>"+esc(tr("susNote"))+"</p>"+(l.length?'<div class="stack">'+l.map(a=>'<div class="ord"><div class="head"><b>'+esc(a.r)+'</b><span class="pill warn">'+esc(tr("susTag"))+
+    '</span></div><div class="meta">'+a.g.map(y=>"<b>"+esc(y.x.name)+"</b> ("+esc(y.role)+(y.x.phone?", "+esc(y.x.phone):"")+")").join("<br>")+"</div></div>").join("")+"</div>":'<div class="empty">'+esc(tr("susNone"))+"</div>")+"</div>"}
 
 // order status changes (pharmacy confirms or declines, courier accepts or delivers)
 document.addEventListener("click",e=>{
