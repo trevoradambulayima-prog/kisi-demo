@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Kisi : trouver un médicament dans les pharmacies de Kinshasa, commander et se faire livrer. Version de démonstration.">
+<meta name="theme-color" content="#0b7a4b">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+<title>Kisi Pharmacy Finder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width column. Four desks behind tabs: buyer search, pharmacy, courier, admin. */
+:root{
+  --bg:#f2f5f1; --surface:#ffffff; --ink:#15211b; --muted:#5d6b63; --line:#d6ddd6;
+  --accent:#0b7a4b; --accent-ink:#ffffff; --accent-soft:#dff0e6;
+  --river:#cfe3ee; --river-ink:#4a7389;
+  --ok:#0b7a4b; --ok-bg:#dff0e6; --warn:#8a5a00; --warn-bg:#fbeccb; --bad:#a3302a; --bad-bg:#f8dedb;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#18211c; --ink:#e8efea; --muted:#9aaba1; --line:#2c3a32;
+  --accent:#4fc48b; --accent-ink:#06170e; --accent-soft:#17382a;
+  --river:#16303d; --river-ink:#8fb9cd;
+  --ok:#6fd6a2; --ok-bg:#17382a; --warn:#f0c268; --warn-bg:#3d2f10; --bad:#f29b94; --bad-bg:#43201d;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#18211c; --ink:#e8efea; --muted:#9aaba1; --line:#2c3a32;
+  --accent:#4fc48b; --accent-ink:#06170e; --accent-soft:#17382a;
+  --river:#16303d; --river-ink:#8fb9cd;
+  --ok:#6fd6a2; --ok-bg:#17382a; --warn:#f0c268; --warn-bg:#3d2f10; --bad:#f29b94; --bad-bg:#43201d;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body)}
+.wrap{max-width:720px;margin:0 auto;padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:16px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex:none}
+.brand h1{font:700 26px/1 var(--display);margin:0;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.lang{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+select,input[type=text],input[type=search],input[type=number],input[type=time],input[type=tel],input[type=date],input[type=password]{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+.lang select{width:auto;min-height:38px;padding:6px 10px}
+
+.demo{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:10px;padding:8px 12px}
+
+.tabs{display:flex;gap:4px;background:var(--line);padding:4px;border-radius:12px}
+.tabs button{flex:1;border:0;background:transparent;border-radius:9px;padding:10px 4px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted);min-width:0}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+
+.view{display:flex;flex-direction:column;gap:16px}
+.search{display:flex;flex-direction:column;gap:10px}
+.search label.big{font:700 20px/1.2 var(--display);text-wrap:balance}
+.search input[type=search]{font-size:17px;min-height:52px;border-width:2px;border-color:var(--accent)}
+.filters{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center}
+.filters select{flex:1 1 180px;width:auto}
+.check{display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;color:var(--ink)}
+.check input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+
+.plan{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.plan svg{display:block;width:100%;height:auto}
+.plan figcaption{font-size:12px;color:var(--muted);padding:6px 12px;border-top:1px solid var(--line)}
+.plan text{font:500 10px var(--body);fill:var(--muted)}
+.plan .rv{fill:var(--river)} .plan .rvt{fill:var(--river-ink);font-style:italic}
+.plan circle{fill:var(--line);stroke:var(--surface);stroke-width:2}
+.plan circle.hit{fill:var(--accent)} .plan circle.miss{fill:var(--bad)}
+#pick{cursor:crosshair;touch-action:manipulation}
+
+.count{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.list{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h2,.card h3{font:700 19px/1.2 var(--display);margin:0;text-wrap:balance}
+.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.pill.ok{color:var(--ok);background:var(--ok-bg)} .pill.warn{color:var(--warn);background:var(--warn-bg)}
+.pill.bad{color:var(--bad);background:var(--bad-bg)} .pill.plain{color:var(--muted);border:1px solid var(--line)}
+.meta{font-size:14px;color:var(--muted);margin:0}
+.meta b{color:var(--ink);font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.phone{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.phone .num{font:600 17px var(--body);font-variant-numeric:tabular-nums;user-select:all}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 12px;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;min-height:38px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.link{border:0;padding-inline:0;color:var(--accent);background:none}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.rows{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.row .pr{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.row small{display:block;color:var(--muted);font-size:12px}
+.rx{font-size:11px;font-weight:700;color:var(--warn);border:1px solid currentColor;border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:20px;text-align:center;color:var(--muted);font-size:14px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{font:700 20px/1.2 var(--display);margin:0}
+.panel h3{font:700 16px/1.2 var(--display);margin:6px 0 0}
+.panel p{margin:0;color:var(--muted);font-size:14px}
+.panel.hl{border-color:var(--accent);border-width:2px}
+.sum{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:15px;display:flex;flex-direction:column;gap:2px}
+.sum div{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.sum .tot{font-weight:700}
+.note{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 10px}
+.ord{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ord .head strong{font-variant-numeric:tabular-nums}
+.ord .head{flex-wrap:wrap}
+.ord .pill{white-space:normal;text-align:right}
+.stack{display:flex;flex-direction:column;gap:8px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:8px 10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"][data-s="in"]{background:var(--ok-bg);color:var(--ok)}
+.seg button[aria-pressed="true"][data-s="low"]{background:var(--warn-bg);color:var(--warn)}
+.seg button[aria-pressed="true"][data-s="out"]{background:var(--bad-bg);color:var(--bad)}
+.pricein{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.pricein input{width:110px;min-height:38px;padding:6px 10px}
+details>summary{cursor:pointer;font:700 20px/1.2 var(--display)}
+form.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+form.grid label:not(.check){display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+form.grid .full{grid-column:1/-1}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.arow:last-child{border-bottom:0}
+.arow div{min-width:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;max-width:90%}
+.subnav{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.subnav button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted)}
+.subnav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.subnav span{font-variant-numeric:tabular-nums;opacity:.7;margin-left:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.tile{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.tile b{font:700 28px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.tile small{color:var(--warn);font-size:12px;font-weight:600}
+.foot{text-align:center}
+.pricetxt{font-weight:600;font-variant-numeric:tabular-nums}
+.prof{display:flex;gap:12px;align-items:center;background:var(--accent-soft);border-radius:10px;padding:10px}
+.prof img,.ph0{width:84px;height:84px;border-radius:12px;object-fit:cover;flex:none}
+.ph0{display:grid;place-items:center;background:var(--line);font:700 32px var(--display);color:var(--muted)}
+.rate{display:flex;flex-direction:column;gap:2px}
+.rate button{border:0;background:none;font-size:32px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 4px}
+.rate div:hover button{color:var(--warn)} .rate div button:hover~button{color:var(--muted)}
+.stars{color:var(--warn);letter-spacing:2px}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:34px;height:34px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-weight:700;cursor:pointer}
+.qty b{min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+.telwrap{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.tel{display:flex;gap:6px}
+.tel input:first-child{width:78px;flex:none;text-align:center;padding-inline:6px}
+.tel input:last-child{flex:1;min-width:0;font-variant-numeric:tabular-nums}
+.tile.flat{cursor:default}
+textarea{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+.me{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.me .who{flex:1 1 140px;min-width:0;display:flex;flex-direction:column}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--line)}
+.thumb{max-width:180px;border-radius:8px;border:1px solid var(--line)}
+.idt{height:54px;border-radius:6px;border:1px solid var(--line);flex:none}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.roles button{text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.roles button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.roles span{font-size:13px;color:var(--muted)}
+input[type=file]{font-size:14px;max-width:100%}
+@media (prefers-reduced-motion:no-preference){.btn,.chips button,.tabs button{transition:background .15s,border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M8 1h6v7h7v6h-7v7H8v-7H1V8h7z" fill="var(--accent-ink)"/></svg></div>
+      <div><h1>Kisi</h1><p data-i18n="tagline"></p></div>
+    </div>
+    <label class="lang"><span data-i18n="lang"></span>
+      <select id="lang"><option value="fr">Français</option><option value="ln">Lingala</option><option value="sw">Kiswahili</option><option value="en">English</option></select>
+    </label>
+  </header>
+
+  <div class="demo" data-i18n="demo"></div>
+
+  <div class="me" id="mebar" hidden>
+    <img class="avatar" id="me-photo" alt="" hidden>
+    <div class="who"><b id="me-name"></b><span class="meta" id="me-role"></span></div>
+    <span class="pill" id="me-ver"></span>
+    <button class="btn" type="button" id="logout" data-i18n="logout"></button>
+  </div>
+
+  <!-- ACCOUNT: the page starts here -->
+  <section class="view" id="auth">
+    <div class="panel">
+      <h2 data-i18n="authTitle"></h2>
+      <p data-i18n="authHelp"></p>
+      <div class="roles" id="roles">
+        <button type="button" data-role="client" aria-pressed="true"><b data-i18n="role_client"></b><span data-i18n="roleClientD"></span></button>
+        <button type="button" data-role="ph" aria-pressed="false"><b data-i18n="role_ph"></b><span data-i18n="rolePhD"></span></button>
+        <button type="button" data-role="cr" aria-pressed="false"><b data-i18n="role_cr"></b><span data-i18n="roleCrD"></span></button>
+      </div>
+
+      <form class="grid" id="acc-form">
+        <label><span data-i18n="fullName"></span><input type="text" id="acc-name" data-cap required></label>
+        <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
+          <input type="text" id="acc-cc" data-cc value="+243" maxlength="5" inputmode="tel" required>
+          <input type="tel" id="acc-phone" data-digits inputmode="numeric" maxlength="10" pattern="[0-9]{9,10}" placeholder="0812345678" required>
+        </div></div>
+        <label><span data-i18n="gender"></span><select id="acc-gender" required></select></label>
+        <label><span data-i18n="dob"></span><input type="date" id="acc-dob" min="1900-01-01" required></label>
+        <label><span data-i18n="pass"></span><input type="password" id="acc-pass" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="pass2"></span><input type="password" id="acc-pass2" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="idType"></span><select id="acc-idtype"></select></label>
+        <label><span data-i18n="idFile"></span><input type="file" id="acc-idfile" accept="image/*" data-img="acc-id" required></label>
+        <img class="thumb full" id="prev-acc-id" alt="" hidden>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="createAcc"></button></div>
+      </form>
+
+      <form class="grid" id="newph" hidden>
+        <label class="full"><span data-i18n="name"></span><input type="text" id="ph-name" data-cap required></label>
+        <label><span data-i18n="resp"></span><input type="text" id="ph-resp" data-cap required></label>
+        <label><span data-i18n="lic"></span><input type="text" id="ph-lic" required></label>
+        <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
+          <input type="text" id="ph-cc" data-cc value="+243" maxlength="5" inputmode="tel" required>
+          <input type="tel" id="ph-phone" data-digits inputmode="numeric" maxlength="10" pattern="[0-9]{9,10}" placeholder="0812345678" required>
+        </div></div>
+        <label><span data-i18n="communeL"></span><select id="ph-commune" required></select></label>
+        <label class="full"><span data-i18n="addressFull"></span><input type="text" id="ph-address" data-cap1 required></label>
+        <div class="full stack">
+          <span class="meta"><b data-i18n="locTitle"></b> · <span id="pickpos">—</span></span>
+          <figure class="plan"><svg id="pick" viewBox="0 0 400 260" role="img" aria-label="Kinshasa"></svg><figcaption data-i18n="locHelp"></figcaption></figure>
+        </div>
+        <label><span data-i18n="opens"></span><input type="time" id="ph-open" value="08:00"></label>
+        <label><span data-i18n="closes"></span><input type="time" id="ph-close" value="20:00"></label>
+        <label class="check full"><input type="checkbox" id="ph-24"><span data-i18n="h24"></span></label>
+        <label class="check full"><input type="checkbox" id="ph-del"><span data-i18n="offerDel"></span></label>
+        <label><span data-i18n="pass"></span><input type="password" id="ph-pass" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="pass2"></span><input type="password" id="ph-pass2" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="idType"></span><select id="ph-idtype"></select></label>
+        <label><span data-i18n="idResp"></span><input type="file" id="ph-idfile" accept="image/*" data-img="ph-id" required></label>
+        <img class="thumb full" id="prev-ph-id" alt="" hidden>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="savePh"></button></div>
+      </form>
+
+      <form class="grid" id="newcr" hidden>
+        <label><span data-i18n="fullName"></span><input type="text" id="cr-name" data-cap required></label>
+        <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
+          <input type="text" id="cr-cc" data-cc value="+243" maxlength="5" inputmode="tel" required>
+          <input type="tel" id="cr-phone" data-digits inputmode="numeric" maxlength="10" pattern="[0-9]{9,10}" placeholder="0812345678" required>
+        </div></div>
+        <label><span data-i18n="gender"></span><select id="cr-gender" required></select></label>
+        <label><span data-i18n="dob"></span><input type="date" id="cr-dob" min="1900-01-01" required></label>
+        <label><span data-i18n="zone"></span><select id="cr-commune" required></select></label>
+        <label><span data-i18n="vehicle"></span><select id="cr-vehicle"></select></label>
+        <label><span data-i18n="pass"></span><input type="password" id="cr-pass" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="pass2"></span><input type="password" id="cr-pass2" minlength="6" autocomplete="new-password" required></label>
+        <label><span data-i18n="idType"></span><select id="cr-idtype"></select></label>
+        <label><span data-i18n="idFile"></span><input type="file" id="cr-idfile" accept="image/*" data-img="cr-id" required></label>
+        <img class="thumb full" id="prev-cr-id" alt="" hidden>
+        <label class="full"><span data-i18n="photo"></span><input type="file" id="cr-photofile" accept="image/*" data-img="cr-photo"></label>
+        <img class="thumb full" id="prev-cr-photo" alt="" hidden>
+        <p class="full meta" data-i18n="idNote"></p>
+        <div class="full" id="cr-near"></div>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="register"></button></div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2 data-i18n="loginTitle"></h2>
+      <form class="grid" id="login">
+        <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
+          <input type="text" id="login-cc" data-cc value="+243" maxlength="5" inputmode="tel" required>
+          <input type="tel" id="login-phone" data-digits inputmode="numeric" autocomplete="tel-national" maxlength="10" pattern="[0-9]{9,10}" placeholder="0812345678" required>
+        </div></div>
+        <label><span data-i18n="passL"></span><input type="password" id="login-pass" autocomplete="current-password" required></label>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="loginBtn"></button></div>
+        <p class="full meta" data-i18n="forgot"></p>
+      </form>
+      <p data-i18n="demoAcc"></p>
+    </div>
+  </section>
+
+  <!-- ADMIN SIGN-IN: its own screen, reached from the Administration link or #admin -->
+  <section class="view" id="adgate" hidden>
+    <div class="panel">
+      <h2 data-i18n="adGate"></h2>
+      <form class="grid" id="adform">
+        <label class="full"><span data-i18n="adCode"></span><input type="text" id="ad-code" autocomplete="off" required></label>
+        <div class="full acts"><button class="btn primary" type="submit" data-i18n="adEnter"></button><button class="btn" type="button" id="ad-back" data-i18n="back"></button></div>
+      </form>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" hidden>
+    <button role="tab" id="tab-find" data-tab="find" aria-selected="true" data-i18n="tabFind"></button>
+    <button role="tab" id="tab-ph" data-tab="ph" aria-selected="false" data-i18n="tabPh"></button>
+    <button role="tab" id="tab-cr" data-tab="cr" aria-selected="false" data-i18n="tabCr"></button>
+    <button role="tab" id="tab-ad" data-tab="ad" aria-selected="false">Admin</button>
+  </div>
+
+  <!-- BUYER -->
+  <section class="view" id="find" hidden>
+    <div class="search">
+      <label class="big" for="q" data-i18n="searchLabel"></label>
+      <input type="search" id="q" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <div class="filters">
+        <select id="commune" aria-label="Commune"></select>
+        <label class="check"><input type="checkbox" id="opennow"><span data-i18n="openNow"></span></label>
+        <label class="check"><input type="checkbox" id="delonly"><span data-i18n="delOnly"></span></label>
+      </div>
+    </div>
+
+    <form class="panel hl" id="order" hidden>
+      <h2 id="od-title"></h2>
+      <div class="stack">
+        <div class="stack" id="od-pick">
+          <label class="stack"><span class="meta" data-i18n="product"></span><select id="od-prod"></select></label>
+          <label class="stack"><span class="meta" data-i18n="qty"></span><input type="number" id="od-qty" min="1" max="20" value="1"></label>
+          <div><button class="btn" type="button" id="od-add" data-i18n="addItem"></button></div>
+        </div>
+        <div class="stack" id="od-cart"></div>
+        <label class="check" id="od-delwrap"><input type="checkbox" id="od-del"><span data-i18n="addDel"></span></label>
+        <div class="stack" id="od-delbox">
+          <label class="stack"><span class="meta" data-i18n="communeL"></span><select id="od-commune"></select></label>
+          <label class="stack"><span class="meta" data-i18n="addressFull"></span><input type="text" id="od-address" data-cap1></label>
+        </div>
+        <label class="stack"><span class="meta" data-i18n="pay"></span><select id="od-pay"></select></label>
+      </div>
+      <div id="od-sum"></div>
+      <div class="acts"><button class="btn primary" type="submit" id="od-send" data-i18n="send"></button><button class="btn" type="button" id="od-cancel" data-i18n="cancel"></button></div>
+    </form>
+
+    <div class="panel" id="myorders" hidden><h2 data-i18n="myOrders"></h2><div class="stack" id="myorders-list"></div></div>
+
+    <figure class="plan">
+      <svg id="plan" viewBox="0 0 400 260" role="img" aria-label="Kinshasa"></svg>
+      <figcaption data-i18n="mapNote"></figcaption>
+    </figure>
+    <div class="count" id="count"></div>
+    <div class="list" id="results"></div>
+  </section>
+
+  <!-- PHARMACY -->
+  <section class="view" id="ph" hidden>
+    <div class="panel">
+      <h2 data-i18n="myPh"></h2>
+      <select id="mph" aria-label="Pharmacie" hidden></select>
+      <div class="stack" id="phprofile"></div>
+      <h3 data-i18n="crReq"></h3>
+      <div class="stack" id="phreq"></div>
+      <h3 data-i18n="myCrs"></h3>
+      <div id="phcrs"></div>
+      <h3 data-i18n="phOrders"></h3>
+      <div class="stack" id="phorders"></div>
+      <h3 data-i18n="stockTitle"></h3>
+      <form class="grid" id="addstock">
+        <label class="full"><span data-i18n="stName"></span><input type="text" id="st-name" data-cap1 list="catalogue" autocomplete="off" required></label>
+        <label><span data-i18n="stStatus"></span><select id="st-status"></select></label>
+        <label><span data-i18n="priceL"></span><input type="number" id="st-price" min="0" step="100" required></label>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="addBtn"></button></div>
+      </form>
+      <datalist id="catalogue"></datalist>
+      <p data-i18n="manageHelp"></p>
+      <div id="stocklist"></div>
+    </div>
+    <div class="panel">
+      <h2 data-i18n="salesTitle"></h2>
+      <div class="stack" id="salesbox"></div>
+    </div>
+  </section>
+
+  <!-- COURIER -->
+  <section class="view" id="cr" hidden>
+    <div class="panel">
+      <h2 data-i18n="myCr"></h2>
+      <select id="mcr" aria-label="Livreur" hidden></select>
+      <div class="stack" id="crspace"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="view" id="ad" hidden>
+    <div class="subnav" id="adnav"></div>
+    <div class="view" id="adview"></div>
+    <div class="panel" id="adprod" hidden>
+      <h2 data-i18n="adProd"></h2>
+      <form class="grid" id="addpr">
+        <label><span data-i18n="prodName"></span><input type="text" id="pr-name" data-cap1 required></label>
+        <label><span data-i18n="priceL"></span><input type="number" id="pr-price" min="0" step="100" required></label>
+        <label class="check full"><input type="checkbox" id="pr-rx"><span data-i18n="rx"></span></label>
+        <div class="full"><button class="btn primary" type="submit" data-i18n="addProd"></button></div>
+      </form>
+      <div><button class="btn" id="reset" type="button" data-i18n="reset"></button></div>
+    </div>
+  </section>
+  <div class="foot" id="foot"><button class="btn link" type="button" id="admin-link" data-i18n="adminLink"></button></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const LANGS=["fr","ln","sw","en"];
+// each key: [fr, ln, sw, en]
+const K={
+tagline:["Trouver un médicament à Kinshasa","Luka kisi na Kinshasa","Tafuta dawa Kinshasa","Find a medicine in Kinshasa"],
+lang:["Langue","Lokota","Lugha","Language"],
+demo:["Données de démonstration : les pharmacies, livreurs, numéros, prix et commandes affichés sont des exemples.","Oyo ezali ndakisa: bafarmasi, ba livreur, banimero, ntalo mpe ba commande ezali ya solo te.","Hizi ni data za mfano: maduka, wasafirishaji, namba, bei na maagizo si ya kweli.","Demo data: the pharmacies, couriers, numbers, prices and orders shown are examples."],
+tabFind:["Trouver","Luka","Tafuta","Find"],tabPh:["Pharmacie","Farmasi","Duka","Pharmacy"],tabCr:["Livreur","Livreur","Msafirishaji","Courier"],
+searchLabel:["Quel médicament cherchez-vous ?","Ozali koluka kisi nini?","Unatafuta dawa gani?","Which medicine are you looking for?"],
+searchPh:["Ex. paracétamol, quinine…","Ndakisa: paracétamol, quinine…","Mfano: paracétamol, quinine…","E.g. paracetamol, quinine…"],
+allCommunes:["Toutes les communes","Bakomine nyonso","Komine zote","All communes"],
+chooseCommune:["Choisir la commune","Pona komine","Chagua komine","Choose the commune"],
+openNow:["Ouvertes maintenant","Efungwami sikoyo","Zilizo wazi sasa","Open now"],
+delOnly:["Avec livraison","Oyo esalaka livraison","Zenye usafirishaji","With delivery"],
+count:["{n} pharmacie(s)","Bafarmasi {n}","Maduka ya dawa {n}","{n} pharmacies"],
+noResult:["Aucune pharmacie ne correspond. Essayez un autre nom ou une autre commune.","Farmasi moko te. Meka nkombo mosusu to komine mosusu.","Hakuna duka linalolingana. Jaribu jina au komine nyingine.","No pharmacy matches. Try another name or another commune."],
+noProduct:["Ce médicament n'est pas encore référencé.","Kisi oyo ezali naino na liste te.","Dawa hii bado haijaorodheshwa.","This medicine is not listed yet."],
+in:["En stock","Ezali","Ipo","In stock"],low:["Stock faible","Etikali moke","Imebaki kidogo","Low stock"],out:["Rupture","Esili","Imeisha","Out of stock"],
+open:["Ouverte","Efungwami","Wazi","Open"],closed:["Fermée","Ekangami","Imefungwa","Closed"],
+h24:["Ouverte 24 h/24","Efungwami ngonga 24","Wazi saa 24","Open 24 hours"],guard:["De garde","Ya garde","Ya zamu","On duty"],
+call:["WhatsApp","WhatsApp","WhatsApp","WhatsApp"],
+waMsg:["Bonjour {p}, je vous contacte depuis l'application Kisi.","Mbote {p}, nazali kokomela bino uta na application Kisi.","Habari {p}, nawasiliana nanyi kupitia programu ya Kisi.","Hello {p}, I am contacting you from the Kisi app."],copy:["Copier le numéro","Kopi nimero","Nakili namba","Copy number"],copied:["Numéro copié","Nimero ekopami","Namba imenakiliwa","Number copied"],
+map:["Voir sur la carte","Tala na karte","Ona kwenye ramani","View on map"],
+seeStock:["Voir tout le stock","Tala stock nyonso","Ona stoki yote","See full stock"],hideStock:["Masquer le stock","Bomba stock","Ficha stoki","Hide stock"],
+updated:["mis à jour il y a {t}","ebongisami: {t} eleki","imesasishwa {t} zilizopita","updated {t} ago"],day:["j","mk","sk","d"],
+avail:["{n} produits disponibles","Bakisi {n} ezali","Bidhaa {n} zipo","{n} products available"],
+mapNote:["Plan simplifié. Vert : disponible. Rouge : rupture.","Karte ya pete. Vert: ezali. Rouge: esili.","Ramani rahisi. Kijani: ipo. Nyekundu: imeisha.","Simplified plan. Green: available. Red: out of stock."],
+river:["Fleuve Congo","Ebale Congo","Mto Kongo","Congo River"],
+verified:["Vérifiée","Endimami","Imethibitishwa","Verified"],verifiedM:["Vérifié","Andimami","Amethibitishwa","Verified"],
+pendingV:["En attente de vérification","Ezali kozela vérification","Inasubiri uthibitisho","Awaiting verification"],
+rx:["Ordonnance requise","Esengeli ordonnance","Inahitaji cheti cha daktari","Prescription required"],
+delivers:["Livraison à domicile","Livraison na ndako","Usafirishaji nyumbani","Home delivery"],
+order:["Commander","Senga","Agiza","Order"],
+orderTitle:["Commande chez {p}","Commande na {p}","Agizo kwa {p}","Order from {p}"],
+product:["Produit","Kisi","Bidhaa","Product"],qty:["Quantité","Motango","Idadi","Quantity"],
+yourName:["Votre nom","Nkombo na yo","Jina lako","Your name"],yourPhone:["Votre téléphone","Telefone na yo","Simu yako","Your phone"],
+communeL:["Commune","Komine","Komine","Commune"],
+addressFull:["Adresse (avenue, numéro, repère)","Adresi (balabala, nimero, elembo)","Anwani (barabara, namba, alama)","Address (avenue, number, landmark)"],
+pay:["Paiement","Kofuta","Malipo","Payment"],
+payCash:["Espèces à la livraison","Mbongo na maboko na livraison","Pesa taslimu wakati wa kupokea","Cash on delivery"],
+payMM:["Mobile Money à la livraison (M-Pesa, Orange, Airtel)","Mobile Money na livraison (M-Pesa, Orange, Airtel)","Mobile Money wakati wa kupokea (M-Pesa, Orange, Airtel)","Mobile Money on delivery (M-Pesa, Orange, Airtel)"],
+medic:["Médicament","Kisi","Dawa","Medicine"],
+fee:["Livraison estimée ({k} km)","Livraison ({k} km)","Usafirishaji ({k} km)","Estimated delivery ({k} km)"],
+total:["Total à payer","Nyonso ya kofuta","Jumla ya kulipa","Total to pay"],
+rxNote:["Ce produit exige une ordonnance. Montrez-la au livreur à la livraison.","Kisi oyo esengeli ordonnance. Lakisa yango na livreur.","Bidhaa hii inahitaji cheti cha daktari. Mwonyeshe msafirishaji.","This product needs a prescription. Show it to the courier on delivery."],
+send:["Envoyer la commande","Tinda commande","Tuma agizo","Send order"],cancel:["Annuler","Tika","Ghairi","Cancel"],
+orderSent:["Commande {c} envoyée","Commande {c} etindami","Agizo {c} limetumwa","Order {c} sent"],
+myOrders:["Mes commandes","Ba commande na ngai","Maagizo yangu","My orders"],
+st_pending:["En attente de la pharmacie","Ezali kozela farmasi","Linasubiri duka","Waiting for the pharmacy"],
+st_confirmed:["Prête, recherche d'un livreur","Ebongi, tozali koluka livreur","Tayari, tunatafuta msafirishaji","Ready, finding a courier"],
+st_picked:["En route","Ezali na nzela","Liko njiani","On the way"],st_done:["Terminée","Esili malamu","Limekamilika","Completed"],st_refused:["Refusée","Eboyami","Limekataliwa","Declined"],
+courier:["Livreur","Livreur","Msafirishaji","Courier"],client:["Client","Client","Mteja","Customer"],
+createPh:["Créer le profil de ma pharmacie","Sala profil ya farmasi na ngai","Fungua wasifu wa duka langu","Create my pharmacy profile"],
+name:["Nom de la pharmacie","Nkombo ya farmasi","Jina la duka","Pharmacy name"],
+resp:["Pharmacien responsable","Farmasie mokambi","Mfamasia mhusika","Responsible pharmacist"],
+lic:["N° d'autorisation d'ouverture","Nimero ya autorisation","Namba ya kibali","Licence number"],
+phoneL:["Téléphone","Telefone","Simu","Phone"],opens:["Ouverture","Efungwamaka","Kufungua","Opens"],closes:["Fermeture","Ekangamaka","Kufunga","Closes"],
+offerDel:["Nous livrons à domicile","Tomemaka na ndako","Tunapeleka nyumbani","We deliver to homes"],
+onGuard:["Nous sommes de garde cette semaine","Tozali ya garde pɔsɔ oyo","Tuko zamu wiki hii","We are on duty this week"],
+locTitle:["Position sur le plan","Esika na karte","Mahali kwenye ramani","Position on the plan"],
+locHelp:["Le point se place sur votre commune. Touchez le plan pour le déplacer à l'endroit exact.","Elembo etiami na komine na yo. Simba karte mpo na kotia yango esika ya solo.","Alama imewekwa kwenye komine yako. Gusa ramani kuisogeza mahali halisi.","The pin starts on your commune. Tap the plan to move it to the exact spot."],
+savePh:["Enregistrer la pharmacie","Bomba farmasi","Hifadhi duka","Save pharmacy"],
+myPh:["Ma pharmacie","Farmasi na ngai","Duka langu","My pharmacy"],
+phOrders:["Commandes reçues","Ba commande oyo ekoti","Maagizo yaliyopokelewa","Orders received"],
+noOrders:["Aucune commande pour l'instant.","Commande moko te sikoyo.","Hakuna agizo kwa sasa.","No orders yet."],
+confirm:["Confirmer, prête","Ndima, ebongi","Thibitisha, tayari","Confirm, ready"],refuse:["Refuser","Boya","Kataa","Decline"],
+stockTitle:["Stock et prix","Stock mpe ntalo","Stoki na bei","Stock and prices"],
+manageHelp:["Indiquez la disponibilité et le prix de chaque produit. Chaque changement est enregistré tout de suite.","Lakisa soki kisi ezali mpe ntalo na yango. Mbongwana nyonso ebombami mbala moko.","Onyesha upatikanaji na bei ya kila bidhaa. Kila badiliko linahifadhiwa mara moja.","Set availability and price for each product. Every change is saved straight away."],
+priceL:["Prix (FC)","Ntalo (FC)","Bei (FC)","Price (FC)"],
+regCr:["S'inscrire comme livreur","Komikomisa lokola livreur","Jisajili kama msafirishaji","Register as a courier"],
+fullName:["Nom complet","Nkombo mobimba","Jina kamili","Full name"],
+zone:["Commune de base","Komine ya mosala","Komine ya kazi","Base commune"],
+vehicle:["Moyen de transport","Ndenge ya kotambola","Chombo cha usafiri","Vehicle"],
+v_moto:["Moto","Moto","Pikipiki","Motorbike"],v_velo:["Vélo","Velo","Baiskeli","Bicycle"],v_pied:["À pied","Na makolo","Kwa miguu","On foot"],v_auto:["Voiture","Motuka","Gari","Car"],
+idType:["Pièce d'identité à présenter","Mokanda ya identité ya kolakisa","Kitambulisho cha kuonyesha","ID document to present"],
+id_el:["Carte d'électeur","Carte d'électeur","Kadi ya mpiga kura","Voter card"],id_pp:["Passeport","Passeport","Pasipoti","Passport"],id_pc:["Permis de conduire","Permis de conduire","Leseni ya udereva","Driving licence"],
+idNote:["L'administrateur vérifie la pièce avant d'activer le compte.","Admin akotala mokanda liboso ya kofungola compte.","Msimamizi atakagua kitambulisho kabla ya kuwasha akaunti.","The admin checks the document before the account is activated."],
+register:["M'inscrire","Komikomisa","Jisajili","Register"],
+myCr:["Mon espace livreur","Esika na ngai ya livreur","Eneo langu la msafirishaji","My courier space"],
+available:["Disponible pour livrer","Nazali prêt mpo na komema","Niko tayari kupeleka","Available to deliver"],
+toDeliver:["Livraisons à prendre","Ba livraison ya kozwa","Usafirishaji wa kuchukua","Deliveries to take"],
+mine:["Mes livraisons","Ba livraison na ngai","Usafirishaji wangu","My deliveries"],
+noneOpen:["Aucune livraison disponible.","Livraison moko te sikoyo.","Hakuna usafirishaji kwa sasa.","No delivery available."],
+accept:["Accepter","Ndima","Kubali","Accept"],markDone:["Marquer livrée","Ekomi","Limefika","Mark delivered"],
+needVerif:["Votre compte doit être vérifié par l'administrateur avant d'envoyer des demandes aux pharmacies.","Admin asengeli kondima compte na yo liboso ya kotinda bisengeli na bafarmasi.","Akaunti yako lazima ithibitishwe na msimamizi kabla ya kutuma maombi kwa maduka.","The administrator must verify your account before you can send requests to pharmacies."],
+noCr:["Aucun livreur inscrit.","Livreur moko te.","Hakuna msafirishaji.","No courier registered."],
+earn:["Gain","Lifuti","Malipo yako","You earn"],
+adNote:["Dans la vraie application, cet onglet est réservé à l'administrateur connecté.","Na application ya solo, esika oyo ezali kaka ya admin.","Kwenye programu halisi, sehemu hii ni ya msimamizi pekee.","In the real app this tab is only for the signed-in admin."],
+adPh:["Pharmacies","Bafarmasi","Maduka ya dawa","Pharmacies"],adCr:["Livreurs","Ba livreur","Wasafirishaji","Couriers"],
+verify:["Vérifier","Ndima","Thibitisha","Verify"],unverify:["Retirer","Longola","Ondoa","Revoke"],
+adProd:["Ajouter un produit","Bakisa kisi","Ongeza bidhaa","Add a product"],prodName:["Nom du produit","Nkombo ya kisi","Jina la bidhaa","Product name"],
+addProd:["Ajouter le produit","Bakisa kisi","Ongeza bidhaa","Add product"],
+reset:["Réinitialiser les données de démonstration","Zongisa ndakisa ya ebandeli","Rudisha data za mfano","Reset demo data"],
+resetConfirm:["Confirmer la réinitialisation","Ndima kozongisa","Thibitisha kurudisha","Confirm reset"],
+saved:["Enregistré","Ebombami","Imehifadhiwa","Saved"],added:["Ajouté","Ebakisami","Imeongezwa","Added"],
+phSaved:["Pharmacie enregistrée, en attente de vérification","Farmasi ebombami, ezali kozela vérification","Duka limehifadhiwa, linasubiri uthibitisho","Pharmacy saved, awaiting verification"],
+crSaved:["Inscription reçue, en attente de vérification","Okomisami, ezali kozela vérification","Umesajiliwa, inasubiri uthibitisho","Registration received, awaiting verification"],
+addDel:["Ajouter la livraison à domicile","Bakisa livraison na ndako","Ongeza usafirishaji nyumbani","Add home delivery"],
+feeRule:["Livraison : 2 500 FC minimum, puis 500 FC par km au-delà de 2 km.","Livraison: 2 500 FC na moke, sima 500 FC na km nyonso soki eleki 2 km.","Usafirishaji: 2 500 FC kima cha chini, kisha 500 FC kwa kila km baada ya km 2.","Delivery: 2,500 FC minimum, then 500 FC per km beyond 2 km."],
+pickupNote:["Sans livraison : vous retirez la commande à la pharmacie.","Soki livraison ezali te: okozwa commande na farmasi.","Bila usafirishaji: utachukua agizo dukani.","Without delivery: you collect the order at the pharmacy."],
+pickup:["Retrait à la pharmacie","Kozwa na farmasi","Kuchukua dukani","Pickup at the pharmacy"],
+ref:["Référence","Référence","Kumbukumbu","Reference"],
+account:["Mon compte","Compte na ngai","Akaunti yangu","My account"],
+accHelp:["Créez votre compte avec votre nom et votre numéro pour commander et suivre vos commandes. Si le numéro existe déjà, vous êtes reconnecté.","Sala compte na nkombo mpe nimero na yo mpo na kosenga mpe kolanda ba commande. Soki nimero ezali, okokota na compte na yo.","Fungua akaunti kwa jina na namba yako ili kuagiza na kufuatilia maagizo. Namba ikiwepo tayari, utaingia.","Create your account with your name and number to order and follow your orders. If the number already exists, you are signed back in."],
+createAcc:["Créer mon compte","Sala compte","Fungua akaunti","Create my account"],
+switchAcc:["Changer de compte","Bongola compte","Badilisha akaunti","Switch account"],
+needAcc:["Créez d'abord votre compte","Sala naino compte na yo","Fungua akaunti kwanza","Create your account first"],
+welcome:["Bienvenue, {n}","Boyei malamu, {n}","Karibu, {n}","Welcome, {n}"],
+st_received:["Réception confirmée, payez le livreur","Ondimi ete ozwi, futa livreur","Umethibitisha kupokea, mlipe msafirishaji","Receipt confirmed, pay the courier"],
+st_ready:["Prête, à retirer à la pharmacie","Ebongi, yaka kozwa na farmasi","Tayari, chukua dukani","Ready, collect at the pharmacy"],
+confirmRecv:["Je confirme avoir reçu ma commande","Nandimi ete nazwi commande","Nathibitisha nimepokea agizo","I confirm I received my order"],
+recvNote:["Confirmez ici à l'arrivée du livreur, puis payez-lui {t}.","Ndima awa tango livreur akomi, sima futa ye {t}.","Thibitisha hapa msafirishaji akifika, kisha mlipe {t}.","Confirm here when the courier arrives, then pay him {t}."],
+waitClient:["Le client doit confirmer la réception dans l'application avant le paiement.","Client asengeli kondima na application liboso ya kofuta.","Mteja lazima athibitishe kwenye programu kabla ya malipo.","The customer must confirm receipt in the app before payment."],
+collect:["Client confirmé. Encaissez {t}.","Client andimi. Zwa {t}.","Mteja amethibitisha. Pokea {t}.","Customer confirmed. Collect {t}."],
+paid:["Paiement reçu, terminer","Mbongo ezwami, kosilisa","Malipo yamepokelewa, maliza","Payment received, finish"],
+handed:["Remise au client","Epesami na client","Limekabidhiwa mteja","Handed to customer"],
+myPhs:["Mes pharmacies ({n})","Bafarmasi na ngai ({n})","Maduka yangu ({n})","My pharmacies ({n})"],
+nearCount:["{n} pharmacies autour de {c}","Bafarmasi {n} pene na {c}","Maduka {n} karibu na {c}","{n} pharmacies around {c}"],
+waitCnt:["{a} prêtes · {b} en préparation","{a} ebongi · {b} ezali kobongisama","{a} tayari · {b} zinaandaliwa","{a} ready · {b} being prepared"],
+authTitle:["Créer un compte","Sala compte","Fungua akaunti","Create an account"],
+authHelp:["Choisissez votre profil. Une pièce d'identité est demandée à chaque personne, pour la sécurité de tous.","Pona profil na yo. Moto nyonso asengeli kotinda mokanda ya identité, mpo na bokengi ya bato nyonso.","Chagua wasifu wako. Kila mtu anaombwa kitambulisho, kwa usalama wa wote.","Choose your profile. Everyone is asked for an ID document, for everyone's safety."],
+role_client:["Client","Client","Mteja","Customer"],roleClientD:["Je cherche et je commande des médicaments","Nalukaka mpe nasengaka bakisi","Natafuta na kuagiza dawa","I look for and order medicines"],
+role_ph:["Pharmacie","Farmasi","Duka la dawa","Pharmacy"],rolePhD:["Je publie mon stock et je reçois des commandes","Nalakisaka stock mpe nazwaka ba commande","Ninaonyesha stoki na kupokea maagizo","I publish my stock and receive orders"],
+role_cr:["Livreur","Livreur","Msafirishaji","Courier"],roleCrD:["Je livre les commandes des pharmacies proches","Namemaka ba commande ya bafarmasi ya pene","Ninapeleka maagizo ya maduka ya karibu","I deliver orders from nearby pharmacies"],
+role_admin:["Administrateur","Admin","Msimamizi","Administrator"],
+idFile:["Photo de la pièce d'identité","Foto ya mokanda ya identité","Picha ya kitambulisho","Photo of the ID document"],
+idResp:["Photo de la pièce d'identité du responsable","Foto ya mokanda ya identité ya mokambi","Picha ya kitambulisho cha mhusika","Photo of the manager's ID document"],
+photo:["Photo de profil (visible par le client)","Foto na yo (client akomona yango)","Picha yako (mteja ataiona)","Profile photo (shown to the customer)"],
+changePhoto:["Ajouter ou changer ma photo","Bakisa to bongola foto na ngai","Ongeza au badilisha picha yangu","Add or change my photo"],
+loginTitle:["J'ai déjà un compte","Nazali na compte","Nina akaunti tayari","I already have an account"],
+loginBtn:["Se connecter","Kota","Ingia","Sign in"],logout:["Se déconnecter","Bima","Toka","Sign out"],
+noAcc:["Aucun compte avec ce numéro","Compte ezali te na nimero oyo","Hakuna akaunti yenye namba hii","No account with this number"],
+demoAcc:["Comptes de démonstration (indicatif +243, mot de passe kisi1234) : client 800000301 · pharmacie 800000101 · livreur 800000201 · administrateur : code KISI-ADMIN","Ba compte ya ndakisa (code +243, mot de passe kisi1234): client 800000301 · farmasi 800000101 · livreur 800000201 · admin: code KISI-ADMIN","Akaunti za mfano (msimbo +243, nenosiri kisi1234): mteja 800000301 · duka 800000101 · msafirishaji 800000201 · msimamizi: msimbo KISI-ADMIN","Demo accounts (code +243, password kisi1234): customer 800000301 · pharmacy 800000101 · courier 800000201 · administrator: code KISI-ADMIN"],
+adminIn:["Accès administrateur (démonstration)","Kokota lokola admin (ndakisa)","Ingia kama msimamizi (mfano)","Administrator access (demo)"],
+needId:["Ajoutez la photo de la pièce d'identité","Bakisa foto ya mokanda ya identité","Ongeza picha ya kitambulisho","Add the photo of the ID document"],
+imgErr:["Image illisible, essayez une autre photo","Foto ezali kofungwama te, meka mosusu","Picha haisomeki, jaribu nyingine","Unreadable image, try another photo"],
+adUs:["Clients","Ba client","Wateja","Customers"],
+noId:["pièce non fournie (exemple)","mokanda ezali te (ndakisa)","hakuna kitambulisho (mfano)","no document (example)"],
+stName:["Produit (choisir dans la liste ou écrire un nouveau nom)","Kisi (pona na liste to koma nkombo ya sika)","Bidhaa (chagua kwenye orodha au andika jina jipya)","Product (pick from the list or type a new name)"],
+stStatus:["Disponibilité","Ezali to te","Upatikanaji","Availability"],
+addBtn:["Ajouter au stock","Bakisa na stock","Ongeza kwenye stoki","Add to stock"],
+noStock:["Aucun produit pour l'instant. Ajoutez votre premier produit ci-dessus.","Kisi moko te sikoyo. Bakisa kisi ya liboso awa likolo.","Hakuna bidhaa bado. Ongeza bidhaa ya kwanza hapo juu.","No product yet. Add your first product above."],
+phPending:["Votre pharmacie sera visible des clients et des livreurs après validation par l'administrateur.","Farmasi na yo ekomonana na ba client mpe ba livreur sima ya admin kondima yango.","Duka lako litaonekana kwa wateja na wasafirishaji baada ya msimamizi kulithibitisha.","Your pharmacy becomes visible to customers and couriers once the administrator approves it."],
+crReq:["Demandes des livreurs","Bisengeli ya ba livreur","Maombi ya wasafirishaji","Courier requests"],
+myCrs:["Mes livreurs","Ba livreur na ngai","Wasafirishaji wangu","My couriers"],
+noReq:["Aucune demande en attente.","Esengeli moko te sikoyo.","Hakuna ombi kwa sasa.","No pending request."],
+noCrs:["Aucun livreur connecté.","Livreur moko te akangami.","Hakuna msafirishaji aliyeunganishwa.","No connected courier."],
+notVerifCr:["Ce livreur n'est plus vérifié par l'administrateur : il ne peut pas être accepté.","Admin andimi lisusu livreur oyo te: okoki kondima ye te.","Msafirishaji huyu hajathibitishwa na msimamizi: hawezi kukubaliwa.","This courier is no longer verified by the administrator, so he cannot be accepted."],
+sendReq:["Envoyer une demande","Tinda esengeli","Tuma ombi","Send a request"],
+reqSent:["Demande envoyée","Esengeli etindami","Ombi limetumwa","Request sent"],
+linked:["Connecté","Okangami","Umeunganishwa","Connected"],
+reqRefused:["Demande refusée","Esengeli eboyami","Ombi limekataliwa","Request declined"],
+areaPhs:["Pharmacies de ma zone ({n})","Bafarmasi ya zone na ngai ({n})","Maduka ya eneo langu ({n})","Pharmacies in my area ({n})"],
+adHome:["Aperçu","Botali","Muhtasari","Overview"],adOd:["Commandes","Ba commande","Maagizo","Orders"],adCat:["Produits","Bakisi","Bidhaa","Products"],
+toVerify:["Comptes à vérifier","Ba compte ya kotala","Akaunti za kuthibitisha","Accounts to verify"],
+nothingV:["Rien à vérifier.","Eloko ya kotala ezali te.","Hakuna cha kuthibitisha.","Nothing to verify."],
+nPend:["{n} à vérifier","{n} ya kotala","{n} za kuthibitisha","{n} to verify"],
+nActive:["{n} en cours","{n} ezali kosalema","{n} yanaendelea","{n} in progress"],
+nProd:["{n} produits","Bakisi {n}","Bidhaa {n}","{n} products"],nOrd:["{n} commandes","Ba commande {n}","Maagizo {n}","{n} orders"],
+nLinks:["{n} pharmacies connectées","Bafarmasi {n} ekangami","Maduka {n} yameunganishwa","{n} connected pharmacies"],
+nStock:["en stock dans {n} pharmacies","ezali na bafarmasi {n}","ipo katika maduka {n}","in stock at {n} pharmacies"],
+adminLink:["Administration","Administration","Usimamizi","Administration"],
+adGate:["Espace administrateur","Esika ya admin","Eneo la msimamizi","Administrator area"],
+adCode:["Code d'accès","Code ya kokota","Nambari ya kuingia","Access code"],adEnter:["Entrer","Kota","Ingia","Enter"],
+badCode:["Code incorrect","Code ezali malamu te","Nambari si sahihi","Wrong code"],back:["Retour","Zonga","Rudi","Back"],
+inStockDup:["Ce produit est déjà dans votre stock","Kisi oyo ezali deja na stock na yo","Bidhaa hii tayari ipo kwenye stoki yako","This product is already in your stock"],
+editPrice:["Modifier le prix","Bongola ntalo","Badilisha bei","Edit price"],
+seeCr:["Voir le profil du livreur","Tala profil ya livreur","Ona wasifu wa msafirishaji","See the courier's profile"],
+hideCr:["Masquer le profil","Bomba profil","Ficha wasifu","Hide profile"],
+rateCr:["Notez votre livreur","Pesa livreur na yo note","Mpe msafirishaji wako alama","Rate your courier"],
+yourRate:["Votre note","Note na yo","Alama yako","Your rating"],
+thanksRate:["Merci pour votre note","Matondo mpo na note","Asante kwa alama yako","Thanks for your rating"],
+noRating:["pas encore de note","note ezali naino te","bado hana alama","no rating yet"],
+nReviews:["{n} avis","ba avis {n}","maoni {n}","{n} ratings"],nDeliv:["{n} livraisons","ba livraison {n}","usafirishaji {n}","{n} deliveries"],
+recvBy:["Réception confirmée par le client","Client andimi ete azwi","Mteja amethibitisha kupokea","Receipt confirmed by the customer"],
+yes:["oui","ɛɛ","ndiyo","yes"],notYet:["pas encore","naino te","bado","not yet"],
+fAll:["Toutes","Nyonso","Yote","All"],fWay:["En livraison","Na nzela","Njiani","On delivery"],
+fRecv:["Arrivées et confirmées par le client","Ekomi mpe client andimi","Yamefika na mteja amethibitisha","Arrived and confirmed by the customer"],
+phConn:["Pharmacies connectées","Bafarmasi ekangami","Maduka yaliyounganishwa","Connected pharmacies"],
+stockedAt:["Pharmacies : {l}","Bafarmasi: {l}","Maduka: {l}","Pharmacies: {l}"],
+onDeliv:["{n} en cours de livraison","{n} na nzela","{n} njiani","{n} being delivered"],none:["aucune","moko te","hakuna","none"],
+addItem:["Ajouter au panier","Bakisa na panier","Ongeza kwenye kikapu","Add to basket"],
+cartTitle:["Mon panier","Panier na ngai","Kikapu changu","My basket"],
+cartEmpty:["Votre panier est vide. Choisissez un produit puis touchez « Ajouter au panier ».","Panier na yo ezali mpamba. Pona kisi, sima simba « Bakisa na panier ».","Kikapu chako ni tupu. Chagua bidhaa kisha gusa « Ongeza kwenye kikapu ».","Your basket is empty. Choose a product, then tap “Add to basket”."],
+removeItem:["Retirer","Longola","Ondoa","Remove"],
+needItem:["Ajoutez au moins un produit","Bakisa ata kisi moko","Ongeza angalau bidhaa moja","Add at least one product"],
+subTot:["Sous-total produits","Ntalo ya bakisi","Jumla ndogo ya bidhaa","Products subtotal"],
+editOrder:["Modifier la commande","Bongola commande","Badilisha agizo","Edit order"],
+cancelOrder:["Annuler la commande","Boma commande","Futa agizo","Cancel order"],
+cancelSure:["Confirmer l'annulation","Ndima koboma","Thibitisha kufuta","Confirm cancellation"],
+st_cancelled:["Annulée par le client","Client abomi yango","Limefutwa na mteja","Cancelled by the customer"],
+orderUpd:["Commande {c} modifiée","Commande {c} ebongwani","Agizo {c} limebadilishwa","Order {c} updated"],
+saveOrder:["Enregistrer les modifications","Bomba mbongwana","Hifadhi mabadiliko","Save changes"],
+editNote:["Vous pouvez modifier ou annuler tant que la pharmacie n'a pas confirmé.","Okoki kobongola to koboma liboso farmasi endima.","Unaweza kubadilisha au kufuta kabla duka halijathibitisha.","You can edit or cancel until the pharmacy confirms."],
+phoneNum:["Téléphone : indicatif + numéro (10 chiffres max)","Telefone: code ya mboka + nimero (chiffres 10 na koleka te)","Simu: msimbo wa nchi + namba (tarakimu 10 zaidi)","Phone: country code + number (10 digits max)"],
+phoneBad:["Entrez un numéro de 9 ou 10 chiffres","Koma nimero ya chiffres 9 to 10","Weka namba ya tarakimu 9 au 10","Enter a 9 or 10 digit number"],
+phoneUsed:["Ce numéro est déjà utilisé par un autre compte","Nimero oyo esalelami deja na compte mosusu","Namba hii tayari inatumika na akaunti nyingine","This number is already used by another account"],
+gender:["Sexe","Mobali to mwasi","Jinsia","Sex"],g_m:["Homme","Mobali","Mwanaume","Man"],g_f:["Femme","Mwasi","Mwanamke","Woman"],
+choose:["Choisir","Pona","Chagua","Choose"],
+dob:["Date de naissance","Mokolo ya mbotama","Tarehe ya kuzaliwa","Date of birth"],
+dobBad:["Date de naissance invalide","Mokolo ya mbotama ezali malamu te","Tarehe ya kuzaliwa si sahihi","Invalid date of birth"],
+age18:["Vous devez avoir entre 18 et 120 ans pour créer un compte","Osengeli kozala na mibu 18 kino 120 mpo na kosala compte","Lazima uwe na miaka 18 hadi 120 ili kufungua akaunti","You must be between 18 and 120 years old to create an account"],
+pass:["Mot de passe (6 caractères minimum)","Mot de passe (bilembo 6 to koleka)","Nenosiri (herufi 6 au zaidi)","Password (6 characters minimum)"],
+pass2:["Confirmer le mot de passe","Koma lisusu mot de passe","Thibitisha nenosiri","Confirm password"],
+passL:["Mot de passe","Mot de passe","Nenosiri","Password"],
+passShort:["Le mot de passe doit avoir au moins 6 caractères","Mot de passe esengeli kozala na bilembo 6 to koleka","Nenosiri lazima liwe na herufi 6 au zaidi","The password must have at least 6 characters"],
+passDiff:["Les deux mots de passe sont différents","Ba mot de passe mibale ekeseni","Manenosiri mawili hayafanani","The two passwords do not match"],
+badLogin:["Numéro ou mot de passe incorrect","Nimero to mot de passe ezali malamu te","Namba au nenosiri si sahihi","Wrong number or password"],
+forgot:["Mot de passe oublié ? Contactez l'administrateur pour le réinitialiser.","Obosani mot de passe? Benga admin mpo abongola yango.","Umesahau nenosiri? Wasiliana na msimamizi aliweke upya.","Forgot your password? Contact the administrator to reset it."],
+show:["Voir","Tala","Ona","Show"],hide:["Masquer","Bomba","Ficha","Hide"],resetPw:["Réinitialiser","Bongola","Weka upya","Reset"],
+pwReset:["Nouveau mot de passe : {p}","Mot de passe ya sika: {p}","Nenosiri jipya: {p}","New password: {p}"],
+salesTitle:["Mes ventes","Biteki na ngai","Mauzo yangu","My sales"],
+salesLock:["Zone réservée au responsable. Entrez le code de ventes donné par l'administrateur de l'application.","Esika ya mokambi kaka. Koma code ya biteki oyo admin ya application apesi.","Sehemu ya mhusika pekee. Weka msimbo wa mauzo uliopewa na msimamizi wa programu.","Manager-only area. Enter the sales code given by the app administrator."],
+salesCodeL:["Code de ventes","Code ya biteki","Msimbo wa mauzo","Sales code"],
+unlock:["Ouvrir","Fungola","Fungua","Open"],lock:["Verrouiller","Kanga","Funga","Lock"],newCode:["Nouveau code","Code ya sika","Msimbo mpya","New code"],
+sTotal:["Total vendu (produits)","Nyonso etekami (bakisi)","Jumla ya mauzo (bidhaa)","Total sold (products)"],
+sOrders:["Commandes vendues","Ba commande etekami","Maagizo yaliyouzwa","Orders sold"],sUnits:["Produits vendus","Bakisi etekami","Bidhaa zilizouzwa","Products sold"],
+sByProd:["Par produit","Na kisi moko moko","Kwa bidhaa","By product"],sList:["Détail des ventes","Biteki moko moko","Maelezo ya mauzo","Sales detail"],
+noSales:["Aucune vente terminée pour l'instant.","Eteki moko te sikoyo.","Hakuna mauzo bado.","No completed sale yet."],
+dl:["Télécharger le fichier des ventes (CSV)","Zwa fichier ya biteki (CSV)","Pakua faili la mauzo (CSV)","Download the sales file (CSV)"],
+dlFail:["Le téléchargement n'est pas disponible ici. Copiez le texte ci-dessous dans un fichier .csv.","Kozwa fichier ekoki te awa. Kopi makomi oyo na fichier .csv.","Haiwezekani kupakua hapa. Nakili maandishi haya kwenye faili la .csv.","Download is not available here. Copy the text below into a .csv file."],
+dlOk:["Fichier enregistré","Fichier ebombami","Faili limehifadhiwa","File saved"],
+buyer:["Acheteur","Mosombi","Mnunuzi","Buyer"],
+paidL:["Paiement reçu par le livreur","Livreur azwi mbongo","Msafirishaji amepokea malipo","Payment received by the courier"],
+cashShort:["espèces","mbongo na maboko","pesa taslimu","cash"],
+changePay:["Modifier le mode de paiement","Bongola ndenge ya kofuta","Badilisha njia ya malipo","Change the payment method"],
+payUpd:["Mode de paiement modifié","Ndenge ya kofuta ebongwani","Njia ya malipo imebadilishwa","Payment method changed"],
+approx:["approximative","ya pene","ya makadirio","approximate"],placed:["placée par vous","otie yango","umeiweka","placed by you"]
+};
+
+// The 24 communes of Kinshasa with approximate centre points [lat, lng]
+const COM={"Bandalungwa":[-4.343,15.283],"Barumbu":[-4.313,15.325],"Bumbu":[-4.372,15.293],"Gombe":[-4.303,15.303],"Kalamu":[-4.347,15.320],
+"Kasa-Vubu":[-4.338,15.303],"Kimbanseke":[-4.430,15.420],"Kinshasa":[-4.322,15.312],"Kintambo":[-4.327,15.268],"Kisenso":[-4.412,15.345],
+"Lemba":[-4.398,15.325],"Limete":[-4.365,15.345],"Lingwala":[-4.320,15.298],"Makala":[-4.378,15.305],"Maluku":[-4.050,15.570],"Masina":[-4.385,15.395],
+"Matete":[-4.390,15.350],"Mont-Ngafula":[-4.430,15.270],"Ndjili":[-4.408,15.375],"Ngaba":[-4.385,15.318],"Ngaliema":[-4.350,15.255],
+"Ngiri-Ngiri":[-4.352,15.298],"Nsele":[-4.370,15.500],"Selembao":[-4.385,15.280]};
+const CNAMES=Object.keys(COM);
+
+const SEED_PH=[
+ ["p1","Pharmacie du Fleuve","Gombe","Av. de la Justice","+243 80 000 01 01",0,0,1,-4.303,15.303,1],
+ ["p2","Pharmacie Kintambo Magasin","Kintambo","Av. OUA, rond-point Magasin","+243 80 000 01 02",450,1260,0,-4.327,15.268,1],
+ ["p3","Pharmacie Mont-Ngaliema","Ngaliema","Route de Matadi, Binza","+243 80 000 01 03",480,1200,0,-4.350,15.255,0],
+ ["p4","Pharmacie Moulaert","Bandalungwa","Av. Kasa-Vubu","+243 80 000 01 04",480,1230,0,-4.343,15.283,0],
+ ["p5","Pharmacie Victoire","Kalamu","Rond-point Victoire","+243 80 000 01 05",0,0,1,-4.347,15.320,1],
+ ["p6","Pharmacie 7e Rue","Limete","Bd Lumumba, 7e Rue","+243 80 000 01 06",450,1290,0,-4.365,15.345,1],
+ ["p7","Pharmacie Campus","Lemba","Av. de l'Université","+243 80 000 01 07",480,1170,0,-4.398,15.325,0],
+ ["p8","Pharmacie Pascal","Masina","Bd Lumumba, Quartier 1","+243 80 000 01 08",420,1320,0,-4.385,15.395,1],
+ ["p9","Pharmacie Sainte-Thérèse","Ndjili","Av. Sainte-Thérèse, Quartier 7","+243 80 000 01 09",480,1200,0,-4.408,15.375,0]
+];
+const SEED_PR=[["paracetamol","Paracétamol 500 mg",1000,0],["amoxicilline","Amoxicilline 500 mg",3500,1],["al","Artéméther-luméfantrine 20/120",6000,0],
+ ["quinine","Quinine 500 mg",5000,1],["tdr","Test rapide paludisme (TDR)",3000,0],["sro","SRO, sels de réhydratation",800,0],["zinc","Zinc 20 mg",1500,0],
+ ["metronidazole","Métronidazole 250 mg",2000,1],["ibuprofene","Ibuprofène 400 mg",1800,0],["cipro","Ciprofloxacine 500 mg",4000,1],
+ ["albendazole","Albendazole 400 mg",1200,0],["metformine","Metformine 500 mg",4500,1],["amlodipine","Amlodipine 5 mg",5500,1],
+ ["insuline","Insuline NPH 10 ml",28000,1],["salbutamol","Salbutamol inhalateur",9000,1],["vitc","Vitamine C 500 mg",1500,0]];
+const POPULAR=["paracetamol","al","quinine","amoxicilline","sro","insuline"];
+const KEY="kisi.v8";
+
+function hash(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return x>>>0}
+function seed(){
+  const now=Date.now();
+  const ph=SEED_PH.map(a=>({id:a[0],name:a[1],commune:a[2],address:a[3],phone:a[4],o:a[5],c:a[6],h24:!!a[7],lat:a[8],lng:a[9],delivery:!!a[10],guard:a[0]==="p5",verified:true,resp:"Pharmacien exemple",lic:"DEMO-"+a[0].toUpperCase(),pass:"kisi1234",salesCode:"VENTE"+a[0].slice(1)}));
+  const pr=SEED_PR.map(a=>({id:a[0],name:a[1],base:a[2],rx:!!a[3]}));
+  const st={};
+  ph.forEach(p=>{st[p.id]={};pr.forEach(r=>{const h=hash(p.id+r.id),k=h%10;
+    st[p.id][r.id]={s:k<6?"in":k<8?"low":"out",p:Math.round(r.base*(0.9+(h%5)*0.05)/100)*100,u:now-(5+h%2800)*60000}})});
+  ["p1","p5"].forEach(id=>{st[id].paracetamol.s="in";st[id].al.s="in"}); st.p6.sro.s="in";
+  const day=new Date(now).toISOString().slice(2,10).replace(/-/g,"");
+  const us=[{id:"u1",name:"Client exemple A",phone:"+243 80 000 03 01",verified:true},{id:"u2",name:"Client exemple B",phone:"+243 80 000 03 02",verified:true}];
+  const cr=[{id:"c1",name:"Livreur exemple 1",phone:"+243 80 000 02 01",commune:"Gombe",vehicle:"moto",idType:"el",available:true,verified:true},
+    {id:"c2",name:"Livreur exemple 2",phone:"+243 80 000 02 02",commune:"Limete",vehicle:"velo",idType:"pc",available:true,verified:true},
+    {id:"c3",name:"Livreur exemple 3",phone:"+243 80 000 02 03",commune:"Ngaliema",vehicle:"moto",idType:"pp",available:false,verified:true}];
+  us.forEach(u=>{u.pass="kisi1234"});cr.forEach(c=>{c.pass="kisi1234"});
+  const mk=(n,ph,r,qty,u,commune,km,fee,pay,status,min)=>({id:"o"+n,code:"KIS-"+day+"-000"+n,ph,items:[{r,qty,price:st[ph][r].p}],user:u.id,buyer:u.name,phone:u.phone,
+    delivery:true,commune,address:"Av. exemple "+(10+n),pay,fee,km,status,courier:null,t:now-min*60000});
+  const od=[mk(1,"p1","al",1,us[0],"Lingwala",2,2500,"cash","confirmed",25),mk(2,"p5","paracetamol",2,us[1],"Ngiri-Ngiri",3,3000,"mm","pending",8),
+    mk(3,"p6","sro",3,us[0],"Matete",3,3000,"cash","confirmed",40),mk(4,"p1","paracetamol",1,us[1],"Barumbu",3,3000,"cash","done",200)];
+  Object.assign(od[3],{courier:"c1",rating:5,log:{pending:now-200*60000,received:now-170*60000,done:now-165*60000}});
+  od[0].items.push({r:"paracetamol",qty:2,price:st.p1.paracetamol.p});
+  od.push(mk(5,"p1","al",2,us[0],"Gombe",1,2500,"mm","done",1500));
+  Object.assign(od[4],{courier:"c1",rating:4,log:{pending:now-1500*60000,received:now-1460*60000,done:now-1455*60000}});
+  od[4].items.push({r:"sro",qty:3,price:st.p1.sro.p});
+  const links=[{cr:"c1",ph:"p1",status:"accepted"},{cr:"c1",ph:"p5",status:"pending"},{cr:"c2",ph:"p6",status:"accepted"},{cr:"c2",ph:"p5",status:"pending"},{cr:"c3",ph:"p2",status:"accepted"}];
+  return {lang:"fr",ph,pr,st,cr,od,us,links,seq:5};
+}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.ph&&s.pr&&s.st&&s.cr&&s.od&&s.us&&s.links)return s}catch(e){}return seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+let S=load(), q="", openCards=new Set(), resetArmed=false, orderPh=null, pick=null, pickManual=false;
+const $=id=>document.getElementById(id);
+function tr(k,v){const a=K[k];let s=a?(a[LANGS.indexOf(S.lang)]||a[0]):k;if(v)for(const x in v)s=s.replace("{"+x+"}",v[x]);return s}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const hm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const money=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" FC";
+function kinNow(){const d=new Date();return (d.getUTCHours()*60+d.getUTCMinutes()+60)%1440}
+function isOpen(p){if(p.h24)return true;const n=kinNow();return p.o<=p.c?(n>=p.o&&n<p.c):(n>=p.o||n<p.c)}
+function ago(u){if(!u)return "";const m=Math.max(1,Math.round((Date.now()-u)/60000));
+  return tr("updated",{t:m<60?m+" min":m<1440?Math.round(m/60)+" h":Math.round(m/1440)+" "+tr("day")})}
+const prod=id=>S.pr.find(x=>x.id===id), pharm=id=>S.ph.find(x=>x.id===id), cour=id=>S.cr.find(x=>x.id===id);
+function stock(pid,rid){const r=prod(rid);return (S.st[pid]&&S.st[pid][rid])||{s:"out",p:r?r.base:0,u:null}}
+const pillCls={in:"ok",low:"warn",out:"bad"}, stCls={pending:"warn",confirmed:"plain",picked:"ok",received:"ok",done:"ok",refused:"bad",cancelled:"bad"};
+// who is signed in: {role, x: the account record, name}
+function who(){const s=S.session;if(!s)return null;
+  if(s.role==="admin")return {role:"admin",x:null,name:"Admin"};
+  const x=s.role==="client"?S.us.find(u=>u.id===s.id):s.role==="ph"?S.ph.find(p=>p.id===s.id):S.cr.find(c=>c.id===s.id);
+  return x?{role:s.role,x,name:x.name}:null}
+const me=()=>{const w=who();return w&&w.role==="client"?w.x:null};
+const TABS={client:["find"],ph:["ph"],cr:["cr"],admin:["ad"]};
+const ADMIN_CODE="KISI-ADMIN";
+const isAdmin=()=>(who()||{}).role==="admin", link=(c,p)=>S.links.find(l=>l.cr===c&&l.ph===p);
+let curTab=null, signRole="client", adTab="home", editPrice=null, gate=false, adOdF="all", adPhC=""; const up={}, openProf=new Set();
+function crStats(id){const r=S.od.filter(o=>o.courier===id&&o.rating);
+  return {n:r.length,avg:r.length?r.reduce((a,o)=>a+o.rating,0)/r.length:0,done:S.od.filter(o=>o.courier===id&&["received","done"].includes(o.status)).length}}
+const ratingTxt=id=>{const x=crStats(id);return (x.n?"★ "+x.avg.toFixed(1)+" · "+tr("nReviews",{n:x.n}):tr("noRating"))+" · "+tr("nDeliv",{n:x.done})};
+const fmtT=t=>{const d=new Date(t+3600000).toISOString();return d.slice(8,10)+"/"+d.slice(5,7)+" "+d.slice(11,16)};
+let cart=[], orderEdit=null, cancelArm=null;
+const digits=x=>String(x).replace(/\D/g,"");
+const capWords=v=>v.replace(/(^|[\s\-'’])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+const cap1=v=>v.replace(/^(\s*)(\p{L})/u,(m,a,b)=>a+b.toUpperCase());
+// stored as "+243 812345678": country code, then the number without its leading 0
+// WhatsApp chat link for a stored number such as "+243 812345678"
+const wa=(phone,text)=>"https://wa.me/"+digits(phone)+(text?"?text="+encodeURIComponent(text):"");
+const waBtn=phone=>'<a class="btn" href="'+esc(wa(phone))+'" target="_blank" rel="noopener">WhatsApp</a>';
+const fullPhone=(cc,num)=>"+"+digits(cc)+" "+digits(num).replace(/^0/,"");
+const phoneTaken=full=>{const v=digits(full);return [S.us,S.ph,S.cr].some(a=>a.some(x=>digits(x.phone)===v))};
+function readPhone(pre){const num=$(pre+"-phone").value;
+  if(!/^[0-9]{9,10}$/.test(num)||digits($(pre+"-cc").value).length<1){toast(tr("phoneBad"));return null}
+  const full=fullPhone($(pre+"-cc").value,num); if(phoneTaken(full)){toast(tr("phoneUsed"));return null} return full}
+const todayISO=()=>new Date(Date.now()+3600000).toISOString().slice(0,10);
+function ageOf(d){const n=todayISO();let a=+n.slice(0,4)- +d.slice(0,4);if(n.slice(5)<d.slice(5))a--;return a}
+function readDob(pre,minAge){const d=$(pre+"-dob").value;
+  if(!/^\d{4}-\d\d-\d\d$/.test(d)||d>todayISO()||d<"1900-01-01"){toast(tr("dobBad"));return null}
+  if(minAge&&(ageOf(d)<minAge||ageOf(d)>120)){toast(tr("age18"));return null} return d}
+const fmtD=d=>d?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"";
+function readPass(pre){const p=$(pre+"-pass").value;
+  if(p.length<6){toast(tr("passShort"));return null} if(p!==$(pre+"-pass2").value){toast(tr("passDiff"));return null} return p}
+function genCode(n,chars){chars=chars||"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let c="";for(let i=0;i<(n||6);i++)c+=chars.charAt(Math.floor(Math.random()*chars.length));return c}
+// the sign-in form remembers the last number used on this device
+function fillLast(){try{const l=JSON.parse(localStorage.getItem("kisi.last"));if(l&&l.num){$("login-cc").value=l.cc||"+243";$("login-phone").value=l.num}}catch(e){}}
+function rememberPhone(phone){const a=String(phone).split(" ");try{localStorage.setItem("kisi.last",JSON.stringify({cc:a[0],num:digits(a.slice(1).join(""))}))}catch(e){}}
+// ---- pharmacy sales (orders that are finished and paid)
+let salesOpen=null, csvText=""; const pwShown=new Set();
+const fmtDT=t=>new Date(t+3600000).toISOString().slice(0,16).replace("T"," ");
+const salesOf=pid=>S.od.filter(o=>o.ph===pid&&o.status==="done").sort((a,b)=>b.t-a.t);
+function salesCsv(p){
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const rows=[["Référence","Date","Produit","Quantité","Prix unitaire (FC)","Total (FC)","Acheteur","Téléphone acheteur","Livreur","Paiement"]];
+  let tot=0, un=0;
+  salesOf(p.id).forEach(o=>{const c=o.courier?cour(o.courier):null;
+    orderItems(o).forEach(i=>{const r=prod(i.r)||{name:"?"};tot+=i.price*i.qty;un+=i.qty;
+      rows.push([o.code,fmtDT((o.log&&o.log.done)||o.t),r.name,i.qty,i.price,i.price*i.qty,o.buyer,o.phone,c?c.name:"Retrait à la pharmacie",o.pay==="mm"?"Mobile Money":"Espèces"])})});
+  rows.push(["TOTAL","","",un,"",tot,"","","",""]);
+  return "\ufeff"+rows.map(r=>r.map(q).join(";")).join("\r\n")}
+function renderSales(){
+  const p=pharm($("mph").value), box=$("salesbox"); if(!p){box.innerHTML="";return}
+  if(salesOpen!==p.id){box.innerHTML="<p>"+esc(tr("salesLock"))+'</p><div class="acts"><input type="password" id="sales-code" autocomplete="off" aria-label="'+esc(tr("salesCodeL"))+
+    '" placeholder="'+esc(tr("salesCodeL"))+'" style="max-width:220px"><button class="btn primary" type="button" data-sales="open">'+esc(tr("unlock"))+"</button></div>";return}
+  const od=salesOf(p.id), by={}; let total=0, units=0;
+  od.forEach(o=>orderItems(o).forEach(i=>{const a=by[i.r]=by[i.r]||{q:0,t:0};a.q+=i.qty;a.t+=i.price*i.qty;total+=i.price*i.qty;units+=i.qty}));
+  const tile=(n,l)=>'<div class="tile flat"><b>'+n+"</b><span>"+esc(l)+"</span></div>";
+  let h='<div class="tiles">'+tile(money(total),tr("sTotal"))+tile(od.length,tr("sOrders"))+tile(units,tr("sUnits"))+"</div>";
+  if(!od.length)h+='<div class="empty">'+esc(tr("noSales"))+"</div>";
+  else h+="<h3>"+esc(tr("sByProd"))+'</h3><div class="rows">'+Object.keys(by).sort((a,b)=>by[b].t-by[a].t).map(k=>'<div class="row"><div>'+esc((prod(k)||{name:"?"}).name)+
+      '</div><span class="meta">× '+by[k].q+'</span><span class="pr">'+money(by[k].t)+"</span></div>").join("")+"</div><h3>"+esc(tr("sList"))+"</h3>"+
+    od.map(o=>{const c=o.courier?cour(o.courier):null;
+      return '<div class="ord"><div class="head"><span><span class="meta">'+esc(tr("ref"))+"</span> <strong>"+esc(o.code)+'</strong></span><span class="pricetxt">'+money(orderSub(o))+"</span></div>"+
+        '<div class="meta">'+esc(fmtDT((o.log&&o.log.done)||o.t))+" · "+esc(orderItems(o).map(i=>(prod(i.r)||{name:"?"}).name+" × "+i.qty).join(", "))+"</div>"+
+        '<div class="meta">'+esc(tr("buyer"))+": <b>"+esc(o.buyer)+"</b> · "+esc(tr("courier"))+": <b>"+esc(c?c.name:tr("pickup"))+"</b></div></div>"}).join("");
+  h+='<div class="acts">'+(od.length?'<button class="btn primary" type="button" data-sales="dl">'+esc(tr("dl"))+"</button>":"")+'<button class="btn" type="button" data-sales="lock">'+esc(tr("lock"))+"</button></div>";
+  if(csvText)h+="<p>"+esc(tr("dlFail"))+'</p><textarea id="sales-csv" readonly rows="7">'+esc(csvText)+"</textarea>";
+  box.innerHTML=h;
+}
+async function dlSales(p){
+  const data=salesCsv(p), filename="ventes-"+norm(p.name).replace(/[^a-z0-9]+/g,"-")+"-"+todayISO()+".csv";
+  let d=null; try{d=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){}
+  if(!d){csvText=data;renderSales();return}
+  try{await d.save({filename,data});toast(tr("dlOk"))}
+  catch(e){if(e&&(e.code==="declined"||e.code==="rate_limited"))return; csvText=data;renderSales()}
+}
+const orderItems=o=>o.items||[{r:o.r,qty:o.qty,price:o.price}];
+const orderSub=o=>orderItems(o).reduce((a,i)=>a+i.price*i.qty,0);
+const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
+const stLabel=o=>tr(o.status==="confirmed"&&!o.delivery?"st_ready":"st_"+o.status);
+function newRef(){S.seq=(S.seq||0)+1;return "KIS-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+String(S.seq).padStart(4,"0")}
+// a courier is linked to the delivering pharmacies within 5 km of his commune (at least the 3 nearest)
+function connected(commune){const o=COM[commune];if(!o)return [];
+  const all=S.ph.filter(p=>p.delivery&&p.verified).map(p=>({p,km:dist(o[0],o[1],p.lat,p.lng)})).sort((a,b)=>a.km-b.km);
+  const near=all.filter(x=>x.km<=5);return near.length>=3?near:all.slice(0,3)}
+function mapUrl(p){return "https://www.google.com/maps/search/?api=1&query="+p.lat+","+p.lng}
+function dist(a,b,c,d){const r=Math.PI/180,x=(d-b)*r*Math.cos((a+c)/2*r),y=(c-a)*r;return Math.sqrt(x*x+y*y)*6371}
+function feeFor(p,commune){const c=COM[commune];if(!c)return null;const k=Math.max(1,Math.ceil(dist(p.lat,p.lng,c[0],c[1])));return {km:k,fee:2500+Math.max(0,k-2)*500}}
+const PX=lng=>Math.min(392,Math.max(8,(lng-15.20)/0.26*400)), PY=lat=>Math.min(252,Math.max(8,(-4.29-lat)/0.17*260));
+const RIVER='<path class="rv" d="M0 0H400V4C300 8 220 4 170 10C115 20 75 45 55 85C40 120 25 170 0 195Z"/>';
+const opts=(list,first)=>(first!=null?'<option value="">'+esc(first)+"</option>":"")+list.map(c=>"<option>"+esc(c)+"</option>").join("");
+function keep(sel,html){const v=sel.value;sel.innerHTML=html;if([...sel.options].some(o=>o.value===v))sel.value=v}
+
+function applyLang(){
+  document.documentElement.lang=S.lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{el.textContent=tr(el.dataset.i18n)});
+  $("q").placeholder=tr("searchPh"); $("lang").value=S.lang;
+  if(resetArmed)$("reset").textContent=tr("resetConfirm");
+  renderAll();
+}
+function fillSelects(){
+  keep($("commune"),opts(CNAMES,tr("allCommunes")));
+  ["od-commune","ph-commune","cr-commune"].forEach(id=>keep($(id),opts(CNAMES,tr("chooseCommune"))));
+  keep($("mph"),S.ph.map(p=>'<option value="'+p.id+'">'+esc(p.name)+" · "+esc(p.commune)+"</option>").join(""));
+  keep($("mcr"),S.cr.map(c=>'<option value="'+c.id+'">'+esc(c.name)+" · "+esc(c.commune)+"</option>").join(""));
+  keep($("cr-vehicle"),["moto","velo","pied","auto"].map(v=>'<option value="'+v+'">'+esc(tr("v_"+v))+"</option>").join(""));
+  ["cr-idtype","acc-idtype","ph-idtype"].forEach(id=>keep($(id),["el","pp","pc"].map(v=>'<option value="'+v+'">'+esc(tr("id_"+v))+"</option>").join("")));
+  keep($("st-status"),["in","low","out"].map(k=>'<option value="'+k+'">'+esc(tr(k))+"</option>").join(""));
+  $("catalogue").innerHTML=S.pr.map(r=>'<option value="'+esc(r.name)+'">').join("");
+  ["acc-gender","cr-gender"].forEach(id=>keep($(id),'<option value="">'+esc(tr("choose"))+'</option><option value="m">'+esc(tr("g_m"))+'</option><option value="f">'+esc(tr("g_f"))+"</option>"));
+  const t0=todayISO(), y0=+t0.slice(0,4);
+  ["acc-dob","cr-dob"].forEach(id=>{$(id).max=(y0-18)+t0.slice(4);$(id).min=(y0-120)+t0.slice(4)});
+  const w=who(); if(w&&w.role==="ph")$("mph").value=w.x.id; if(w&&w.role==="cr")$("mcr").value=w.x.id;
+  keep($("od-pay"),'<option value="cash">'+esc(tr("payCash"))+'</option><option value="mm">'+esc(tr("payMM"))+"</option>");
+}
+function renderAll(){fillSelects();renderChips();renderSession();renderResults();renderOrderForm();renderMyOrders();renderNear();renderPick();renderPh();renderSales();renderCr();renderAdmin()}
+function renderChips(){
+  $("chips").innerHTML=POPULAR.map(id=>{const r=prod(id);return r?'<button type="button" data-chip="'+esc(r.name)+'">'+esc(r.name)+"</button>":""}).join("");
+}
+function prodRow(p,r){const s=stock(p.id,r.id);
+  return '<div class="row"><div>'+esc(r.name)+(r.rx?'<span class="rx" title="'+esc(tr("rx"))+'">Rx</span>':"")+(s.u?"<small>"+esc(ago(s.u))+"</small>":"")+
+    '</div><span class="pr">'+(s.s==="out"?"":money(s.p))+'</span><span class="pill '+pillCls[s.s]+'">'+esc(tr(s.s))+"</span></div>"}
+function matchedProducts(){const nq=norm(q.trim());return nq?S.pr.filter(r=>norm(r.name).includes(nq)):[]}
+function renderResults(){
+  const nq=norm(q.trim()), commune=$("commune").value, onlyOpen=$("opennow").checked, onlyDel=$("delonly").checked;
+  const matched=matchedProducts();
+  const adm=isAdmin();
+  let list=S.ph.filter(p=>(p.verified||adm)&&(!commune||p.commune===commune)&&(!onlyOpen||isOpen(p))&&(!onlyDel||p.delivery));
+  const rank={in:0,low:1,out:2}, best={};
+  if(nq){
+    list.forEach(p=>{let b=null;matched.forEach(r=>{const s=stock(p.id,r.id);if(!b||rank[s.s]<rank[b.s]||(rank[s.s]===rank[b.s]&&s.p<b.p))b=s});best[p.id]=b});
+    list=matched.length?list.sort((a,b)=>rank[best[a.id].s]-rank[best[b.id].s]||best[a.id].p-best[b.id].p):[];
+  }
+  $("count").textContent=tr("count",{n:list.length});
+  if(!list.length){$("results").innerHTML='<div class="empty">'+esc(nq&&!matched.length?tr("noProduct"):tr("noResult"))+"</div>"}
+  else $("results").innerHTML=list.map(p=>{
+    const op=isOpen(p), full=openCards.has(p.id);
+    const n=S.pr.filter(r=>stock(p.id,r.id).s!=="out").length;
+    const hours=p.h24?tr("h24"):hm(p.o)+" – "+hm(p.c);
+    return '<article class="card"><div class="head"><h2>'+esc(p.name)+'</h2><div class="badges">'+
+      (p.guard?'<span class="pill plain">'+esc(tr("guard"))+"</span>":"")+
+      '<span class="pill '+(op?"ok":"bad")+'">'+esc(op?tr("open"):tr("closed"))+"</span></div></div>"+
+      '<p class="meta">'+esc(p.commune)+" · "+esc(p.address)+"<br>"+esc(hours)+(nq?"":" · "+esc(tr("avail",{n})))+"</p>"+
+      '<div class="tags"><span class="pill '+(p.verified?"ok":"warn")+'">'+esc(p.verified?tr("verified"):tr("pendingV"))+"</span>"+
+      (p.delivery?'<span class="pill plain">'+esc(tr("delivers"))+"</span>":"")+"</div>"+
+      (nq?'<div class="rows">'+matched.slice(0,4).map(r=>prodRow(p,r)).join("")+"</div>":"")+
+      '<div class="phone"><span class="num">'+esc(p.phone)+"</span>"+
+      (n&&me()?'<button class="btn primary" type="button" data-order="'+p.id+'">'+esc(tr("order"))+"</button>":"")+
+      '<a class="btn'+(n&&me()?"":" primary")+'" href="'+esc(wa(p.phone,tr("waMsg",{p:p.name})))+'" target="_blank" rel="noopener">'+esc(tr("call"))+
+      '</a><button class="btn" type="button" data-copy="'+esc(p.phone)+'">'+esc(tr("copy"))+
+      '</button><a class="btn" href="'+mapUrl(p)+'" target="_blank" rel="noopener">'+esc(tr("map"))+"</a></div>"+
+      '<div><button class="btn link" type="button" data-toggle="'+p.id+'" aria-expanded="'+full+'">'+esc(full?tr("hideStock"):tr("seeStock"))+"</button></div>"+
+      (full?'<div class="rows">'+S.pr.filter(r=>S.st[p.id]&&S.st[p.id][r.id]).map(r=>prodRow(p,r)).join("")+"</div>":"")+"</article>"}).join("");
+  renderPlan(nq&&matched.length?best:null, new Set(list.map(p=>p.id)));
+}
+function renderPlan(best,shown){
+  let h=RIVER+'<text class="rvt" x="10" y="24">'+esc(tr("river"))+"</text>";
+  const adm=isAdmin();
+  S.ph.forEach(p=>{if(!p.verified&&!adm)return;const x=PX(p.lng),y=PY(p.lat);
+    const cls=!shown.has(p.id)?"":best?(best[p.id].s==="out"?"miss":"hit"):"hit", right=x>300;
+    h+='<circle class="'+cls+'" cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="7"><title>'+esc(p.name)+"</title></circle>"+
+       '<text x="'+(right?x-11:x+11).toFixed(1)+'" y="'+(y+3.5).toFixed(1)+'"'+(right?' text-anchor="end"':"")+">"+esc(p.commune)+"</text>"});
+  $("plan").innerHTML=h;
+}
+
+/* ---------- orders (buyer) ---------- */
+function showTab(t){curTab=t;
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t));
+  ["find","ph","cr","ad"].forEach(id=>{$(id).hidden=id!==t})}
+function renderSession(){
+  const w=who(), tabs=w?TABS[w.role]:[];
+  $("auth").hidden=!!w||gate; $("adgate").hidden=!!w||!gate; $("foot").hidden=!!w||gate; $("mebar").hidden=!w;
+  document.querySelectorAll(".tabs button").forEach(b=>{b.hidden=!tabs.includes(b.dataset.tab)});
+  document.querySelector(".tabs").hidden=tabs.length<2;
+  document.querySelectorAll("#roles button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.role===signRole));
+  $("acc-form").hidden=signRole!=="client"; $("newph").hidden=signRole!=="ph"; $("newcr").hidden=signRole!=="cr";
+  if(!w){["find","ph","cr","ad"].forEach(id=>{$(id).hidden=true});return}
+  showTab(tabs.includes(curTab)?curTab:tabs[0]);
+  $("me-name").textContent=w.name; $("me-role").textContent=tr("role_"+w.role)+(w.x&&w.x.phone?" · "+w.x.phone:"");
+  const ph=w.x&&w.x.photo; $("me-photo").hidden=!ph; if(ph)$("me-photo").src=ph;
+  const v=$("me-ver"); v.hidden=!w.x;
+  if(w.x){v.className="pill "+(w.x.verified?"ok":"warn"); v.textContent=tr(w.x.verified?(w.role==="ph"?"verified":"verifiedM"):"pendingV")}
+}
+function login(s,msg){S.session=s;save();curTab=null;orderPh=null;salesOpen=null;csvText="";renderAll();const w=who();
+  if(w&&w.x&&w.x.phone){rememberPhone(w.x.phone);fillLast()}toast(msg||tr("welcome",{n:w?w.name:""}));window.scrollTo(0,0)}
+function clearUp(){for(const k in up)delete up[k];document.querySelectorAll("img.thumb").forEach(x=>{x.hidden=true;x.removeAttribute("src")})}
+function shrink(file,max,cb){const fr=new FileReader();fr.onerror=()=>cb(null);
+  fr.onload=()=>{const im=new Image();im.onerror=()=>cb(null);
+    im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      try{cb(c.toDataURL("image/jpeg",0.7))}catch(e){cb(null)}};
+    im.src=fr.result};
+  fr.readAsDataURL(file)}
+function openOrder(pid,edit){
+  if(!me())return;
+  const p=pharm(pid); if(!p)return;
+  orderPh=pid; orderEdit=edit?edit.id:null;
+  if(edit){cart=orderItems(edit).filter(i=>stock(pid,i.r).s!=="out").map(i=>({r:i.r,qty:i.qty}));
+    $("od-del").checked=!!edit.delivery; $("od-commune").value=edit.commune||""; $("od-address").value=edit.address||""; $("od-pay").value=edit.pay}
+  else{const m=matchedProducts().find(r=>stock(pid,r.id).s!=="out"); cart=m?[{r:m.id,qty:1}]:[]; $("od-del").checked=!!p.delivery}
+  $("od-qty").value=1;
+  $("order").hidden=false; renderOrderForm(); $("order").scrollIntoView({block:"start",behavior:"smooth"});
+}
+function renderOrderForm(){
+  if(!orderPh||!pharm(orderPh)){$("order").hidden=true;return}
+  const p=pharm(orderPh), del=!!p.delivery&&$("od-del").checked;
+  $("od-title").textContent=tr("orderTitle",{p:p.name}); $("od-send").textContent=tr(orderEdit?"saveOrder":"send");
+  $("od-delwrap").hidden=!p.delivery; $("od-delbox").hidden=!del; $("od-commune").required=del; $("od-address").required=del;
+  const left=S.pr.filter(r=>stock(p.id,r.id).s!=="out"&&!cart.some(i=>i.r===r.id));
+  keep($("od-prod"),left.map(r=>'<option value="'+r.id+'">'+esc(r.name)+" · "+money(stock(p.id,r.id).p)+"</option>").join(""));
+  $("od-pick").hidden=!left.length;
+  let sub=0, rx=false;
+  const lines=cart.map(i=>{const r=prod(i.r)||{name:"?"}, pr=stock(p.id,i.r).p; sub+=pr*i.qty; if(r.rx)rx=true;
+    return '<div class="row"><div>'+esc(r.name)+(r.rx?'<span class="rx">Rx</span>':"")+"<small>"+money(pr)+" × "+i.qty+'</small></div><span class="pr">'+money(pr*i.qty)+
+      '</span><div class="qty"><button type="button" data-cq="-1" data-r="'+i.r+'" aria-label="-1">−</button><b>'+i.qty+'</b><button type="button" data-cq="1" data-r="'+i.r+
+      '" aria-label="+1">+</button><button type="button" data-crm="'+i.r+'" aria-label="'+esc(tr("removeItem"))+'" title="'+esc(tr("removeItem"))+'">✕</button></div></div>'}).join("");
+  $("od-cart").innerHTML="<h3>"+esc(tr("cartTitle"))+" ("+cart.length+")</h3>"+(cart.length?'<div class="rows">'+lines+"</div>":'<div class="empty">'+esc(tr("cartEmpty"))+"</div>");
+  const f=del?feeFor(p,$("od-commune").value):null;
+  $("od-sum").innerHTML=!cart.length?"":'<div class="stack"><div class="sum"><div><span>'+esc(tr("subTot"))+"</span><span>"+money(sub)+"</span></div>"+
+    (f?"<div><span>"+esc(tr("fee",{k:f.km}))+"</span><span>"+money(f.fee)+"</span></div>":"")+
+    (f||!del?'<div class="tot"><span>'+esc(tr("total"))+"</span><span>"+money(sub+(f?f.fee:0))+"</span></div>":"")+
+    '</div><p class="meta">'+esc(tr(del?"feeRule":"pickupNote"))+"</p>"+(rx?'<div class="note">'+esc(tr("rxNote"))+"</div>":"")+"</div>";
+}
+function orderCard(o,role){
+  const p=pharm(o.ph)||{name:"?",commune:"",address:"",phone:""}, its=orderItems(o), c=o.courier?cour(o.courier):null, tot=money(orderSub(o)+o.fee);
+  const btn=(st,label)=>'<div class="acts"><button class="btn primary" type="button" data-ost="'+st+'" data-o="'+o.id+'">'+esc(label)+"</button></div>";
+  const crLine=c?'<div class="phone">'+(c.photo?'<img class="avatar" src="'+c.photo+'" alt="">':"")+'<span class="meta">'+esc(tr("courier"))+": <b>"+esc(c.name)+"</b> · "+esc(c.phone)+"</span>"+waBtn(c.phone)+"</div>":"";
+  let h='<div class="ord"><div class="head"><span><span class="meta">'+esc(tr("ref"))+"</span> <strong>"+esc(o.code)+'</strong></span><span class="pill '+stCls[o.status]+'">'+esc(stLabel(o))+"</span></div>"+
+    its.map(i=>{const r=prod(i.r)||{name:"?"};return "<div>"+esc(r.name)+" × "+i.qty+(r.rx?'<span class="rx">Rx</span>':"")+' <span class="meta">'+money(i.price*i.qty)+"</span></div>"}).join("")+
+    '<div class="meta">'+esc(p.name)+" ("+esc(p.commune)+")"+(o.delivery?" → "+esc(o.commune):" · "+esc(tr("pickup")))+"</div>";
+  if(role==="buyer"){
+    h+='<div class="meta">'+esc(tr("total"))+": <b>"+tot+"</b> · "+esc(tr(o.pay==="mm"?"payMM":"payCash"))+"<br>"+esc(p.name)+": "+esc(p.phone)+"</div>";
+    if(["pending","confirmed","picked","received"].includes(o.status))h+='<label class="stack"><span class="meta">'+esc(tr("changePay"))+'</span><select id="pay-'+o.id+'" data-opay="'+o.id+'">'+
+      '<option value="cash"'+(o.pay==="cash"?" selected":"")+">"+esc(tr("payCash"))+'</option><option value="mm"'+(o.pay==="mm"?" selected":"")+">"+esc(tr("payMM"))+"</option></select></label>";
+    if(c&&["picked","received","done"].includes(o.status)){
+      const op=openProf.has(o.id);
+      h+=crLine+'<div><button class="btn link" type="button" data-prof="'+o.id+'" aria-expanded="'+op+'">'+esc(tr(op?"hideCr":"seeCr"))+"</button></div>";
+      if(op)h+='<div class="prof">'+(c.photo?'<img src="'+c.photo+'" alt="">':'<span class="ph0">'+esc(c.name.charAt(0).toUpperCase())+"</span>")+
+        "<div><b>"+esc(c.name)+'</b> <span class="pill '+(c.verified?"ok":"warn")+'">'+esc(tr(c.verified?"verifiedM":"pendingV"))+'</span><br><span class="meta">'+
+        esc(c.phone)+"<br>"+esc(tr("v_"+c.vehicle))+" · "+esc(c.commune)+"<br>"+esc(ratingTxt(c.id))+"</span></div></div>";
+    }
+    if(c&&["received","done"].includes(o.status))h+=o.rating?'<div class="meta">'+esc(tr("yourRate"))+': <b class="stars">'+stars(o.rating)+"</b></div>":
+      '<div class="rate"><span class="meta">'+esc(tr("rateCr"))+"</span><div>"+[1,2,3,4,5].map(n=>'<button type="button" data-rate="'+n+'" data-o="'+o.id+'" aria-label="'+n+'/5">★</button>').join("")+"</div></div>";
+    if(o.status==="pending")h+='<div class="meta">'+esc(tr("editNote"))+'</div><div class="acts"><button class="btn" type="button" data-oedit="'+o.id+'">'+esc(tr("editOrder"))+
+      '</button><button class="btn" type="button" data-ocancel="'+o.id+'">'+esc(tr(cancelArm===o.id?"cancelSure":"cancelOrder"))+"</button></div>";
+    if(o.status==="picked")h+='<div class="note">'+esc(tr("recvNote",{t:tot}))+"</div>"+btn("received",tr("confirmRecv"));
+  }
+  if(role==="ph"){
+    h+='<div class="meta">'+esc(tr("client"))+": <b>"+esc(o.buyer)+"</b> · "+esc(o.phone)+"<br>"+esc(tr("total"))+": <b>"+tot+"</b> · "+esc(tr(o.pay==="mm"?"payMM":"payCash"))+"</div>"+crLine;
+    if(o.status==="pending")h+='<div class="acts"><button class="btn primary" type="button" data-ost="confirmed" data-o="'+o.id+'">'+esc(tr("confirm"))+
+      '</button><button class="btn" type="button" data-ost="refused" data-o="'+o.id+'">'+esc(tr("refuse"))+"</button></div>";
+    if(o.status==="confirmed"&&!o.delivery)h+=btn("done",tr("handed"));
+  }
+  if(role==="open"){
+    h+='<div class="meta">'+esc(p.address)+" · "+o.km+" km · "+esc(tr("earn"))+": <b>"+money(o.fee)+"</b></div>"+
+      '<div class="acts"><button class="btn primary" type="button" data-accept="'+o.id+'">'+esc(tr("accept"))+"</button></div>";
+  }
+  if(role==="mine"){
+    h+='<div class="meta">'+esc(tr("client"))+": <b>"+esc(o.buyer)+"</b> · "+esc(o.phone)+"<br>"+esc(o.address)+", "+esc(o.commune)+"<br>"+
+      esc(tr("total"))+": <b>"+tot+"</b> · "+esc(tr(o.pay==="mm"?"payMM":"payCash"))+"</div><div>"+waBtn(o.phone)+"</div>";
+    if(o.status==="picked")h+='<div class="note">'+esc(tr("waitClient"))+"</div>";
+    if(o.status==="received")h+='<div class="note">'+esc(tr("collect",{t:tot}))+"</div>"+btn("done",tr("paid"));
+  }
+  if(role==="admin")h+='<div class="meta">'+esc(tr("client"))+": <b>"+esc(o.buyer)+"</b> · "+esc(o.phone)+"<br>"+esc(tr("total"))+": <b>"+tot+"</b> · "+esc(tr(o.pay==="mm"?"payMM":"payCash"))+"</div>"+crLine+(o.rating?'<div class="meta"><b class="stars">'+stars(o.rating)+"</b></div>":"");
+  if(role!=="open"&&o.delivery&&["picked","received","done"].includes(o.status)){
+    const rc=["received","done"].includes(o.status), pd=o.status==="done", lg=o.log||{};
+    h+='<div class="sum"><div><span>'+esc(tr("recvBy"))+"</span><span><b>"+esc(rc?tr("yes")+(lg.received?" · "+fmtT(lg.received):""):tr("notYet"))+"</b></span></div>"+
+      "<div><span>"+esc(tr("paidL"))+" ("+esc(o.pay==="mm"?"Mobile Money":tr("cashShort"))+")</span><span><b>"+esc(pd?tr("yes")+(lg.done?" · "+fmtT(lg.done):""):tr("notYet"))+"</b></span></div></div>";
+  }
+  return h+"</div>";
+}
+const byNew=(a,b)=>b.t-a.t;
+function renderMyOrders(){
+  const u=me(), mine=u?S.od.filter(o=>o.user===u.id).sort(byNew):[];
+  $("myorders").hidden=!mine.length;
+  $("myorders-list").innerHTML=mine.map(o=>orderCard(o,"buyer")).join("");
+}
+
+/* ---------- pharmacy desk ---------- */
+function renderPick(){
+  let h=RIVER+'<text class="rvt" x="10" y="24">'+esc(tr("river"))+"</text>";
+  if(pick){h+='<circle class="hit" cx="'+PX(pick.lng).toFixed(1)+'" cy="'+PY(pick.lat).toFixed(1)+'" r="9"/>';
+    $("pickpos").textContent=pick.lat.toFixed(4)+", "+pick.lng.toFixed(4)+" ("+tr(pickManual?"placed":"approx")+")"}
+  else $("pickpos").textContent="—";
+  $("pick").innerHTML=h;
+}
+function renderPh(){
+  const p=pharm($("mph").value); if(!p)return;
+  $("phprofile").innerHTML='<p class="meta">'+esc(p.address)+", "+esc(p.commune)+" · "+esc(p.phone)+" · "+esc(p.h24?tr("h24"):hm(p.o)+" – "+hm(p.c))+"</p>"+
+    '<div class="tags"><span class="pill '+(p.verified?"ok":"warn")+'">'+esc(p.verified?tr("verified"):tr("pendingV"))+"</span></div>"+
+    (p.verified?"":'<div class="note">'+esc(tr("phPending"))+"</div>")+
+    '<label class="check"><input type="checkbox" id="pf-delivery" data-pf="delivery"'+(p.delivery?" checked":"")+"><span>"+esc(tr("offerDel"))+"</span></label>"+
+    '<label class="check"><input type="checkbox" id="pf-guard" data-pf="guard"'+(p.guard?" checked":"")+"><span>"+esc(tr("onGuard"))+"</span></label>";
+  const crRow=(c,right)=>'<div class="arow"><div class="phone">'+(c.photo?'<img class="avatar" src="'+c.photo+'" alt="">':"")+"<div><b>"+esc(c.name)+
+    '</b><br><span class="meta">'+esc(c.phone)+" · "+esc(c.commune)+" · "+esc(tr("v_"+c.vehicle))+"<br>"+esc(ratingTxt(c.id))+"</span></div></div>"+right+"</div>";
+  const lbtn=(act,c,label,primary)=>'<button class="btn'+(primary?" primary":"")+'" type="button" data-link="'+act+'" data-cr="'+c.id+'">'+esc(label)+"</button>";
+  const req=S.links.filter(l=>l.ph===p.id&&l.status==="pending").map(l=>cour(l.cr)).filter(Boolean);
+  const acc=S.links.filter(l=>l.ph===p.id&&l.status==="accepted").map(l=>cour(l.cr)).filter(Boolean);
+  $("phreq").innerHTML=req.length?req.map(c=>crRow(c,'<div class="acts">'+(c.verified?lbtn("accepted",c,tr("accept"),true):"")+lbtn("refused",c,tr("refuse"))+"</div>")+
+    (c.verified?"":'<div class="note">'+esc(tr("notVerifCr"))+"</div>")).join(""):'<div class="empty">'+esc(tr("noReq"))+"</div>";
+  $("phcrs").innerHTML=acc.length?acc.map(c=>crRow(c,lbtn("remove",c,tr("unverify")))).join(""):'<div class="empty">'+esc(tr("noCrs"))+"</div>";
+  const od=S.od.filter(o=>o.ph===p.id).sort(byNew);
+  $("phorders").innerHTML=od.length?od.map(o=>orderCard(o,"ph")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>";
+  const mine=S.pr.filter(r=>S.st[p.id]&&S.st[p.id][r.id]);
+  $("catalogue").innerHTML=S.pr.filter(r=>!mine.includes(r)).map(r=>'<option value="'+esc(r.name)+'">').join("");
+  $("stocklist").innerHTML=!mine.length?'<div class="empty">'+esc(tr("noStock"))+"</div>":mine.map(r=>{const s=stock(p.id,r.id);
+    return '<div class="srow"><strong>'+esc(r.name)+(r.rx?'<span class="rx">Rx</span>':"")+'</strong><div class="ctl"><div class="seg" role="group">'+
+      ["in","low","out"].map(k=>'<button type="button" data-s="'+k+'" data-r="'+r.id+'" aria-pressed="'+(s.s===k)+'">'+esc(tr(k))+"</button>").join("")+
+      "</div>"+(editPrice===r.id
+        ?'<label class="pricein">'+esc(tr("priceL"))+'<input type="number" id="price-'+r.id+'" min="0" step="100" value="'+s.p+'"></label><button class="btn primary" type="button" data-pricesave="'+r.id+'">OK</button>'
+        :'<span class="pricetxt">'+money(s.p)+'</span><button class="btn" type="button" data-priceedit="'+r.id+'">'+esc(tr("editPrice"))+"</button>")+"</div></div>"}).join("");
+}
+function setStock(pid,rid,patch){
+  if(!S.st[pid])S.st[pid]={};
+  S.st[pid][rid]=Object.assign({},stock(pid,rid),patch,{u:Date.now()}); save(); renderResults();
+}
+
+/* ---------- courier desk ---------- */
+function phLine(x){
+  const a=S.od.filter(o=>o.ph===x.p.id&&o.delivery&&o.status==="confirmed"&&!o.courier).length, b=S.od.filter(o=>o.ph===x.p.id&&o.delivery&&o.status==="pending").length;
+  return '<div class="arow"><div><b>'+esc(x.p.name)+'</b><br><span class="meta">'+esc(x.p.commune)+" · "+x.km.toFixed(1)+' km</span></div><span class="pill '+(a?"ok":"plain")+'">'+esc(tr("waitCnt",{a,b}))+"</span></div>"}
+function areaRow(c,x){
+  const l=link(c.id,x.p.id), st=l?l.status:null; let right="";
+  if(st==="accepted"){
+    const a=S.od.filter(o=>o.ph===x.p.id&&o.delivery&&o.status==="confirmed"&&!o.courier).length, b=S.od.filter(o=>o.ph===x.p.id&&o.delivery&&o.status==="pending").length;
+    right='<div class="badges"><span class="pill ok">'+esc(tr("linked"))+'</span><span class="pill '+(a?"ok":"plain")+'">'+esc(tr("waitCnt",{a,b}))+"</span></div>";
+  }else if(st==="pending")right='<span class="pill warn">'+esc(tr("reqSent"))+"</span>";
+  else if(st==="refused")right='<span class="pill bad">'+esc(tr("reqRefused"))+"</span>";
+  else if(c.verified)right='<button class="btn primary" type="button" data-req="'+x.p.id+'">'+esc(tr("sendReq"))+"</button>";
+  return '<div class="arow"><div><b>'+esc(x.p.name)+'</b><br><span class="meta">'+esc(x.p.commune)+" · "+esc(x.p.address)+" · "+x.km.toFixed(1)+" km</span></div>"+right+"</div>"}
+function renderNear(){
+  const c=$("cr-commune").value, con=connected(c);
+  $("cr-near").innerHTML=c?'<p class="meta"><b>'+esc(tr("nearCount",{n:con.length,c}))+"</b></p>"+con.map(phLine).join(""):"";
+}
+function renderCr(){
+  const c=cour($("mcr").value);
+  if(!c){$("crspace").innerHTML='<div class="empty">'+esc(tr("noCr"))+"</div>";return}
+  const con=connected(c.commune), ids=new Set(S.links.filter(l=>l.cr===c.id&&l.status==="accepted").map(l=>l.ph));
+  const open=S.od.filter(o=>o.status==="confirmed"&&o.delivery&&!o.courier&&ids.has(o.ph)).sort(byNew), mine=S.od.filter(o=>o.courier===c.id).sort(byNew);
+  let h='<p class="meta">'+esc(c.phone)+" · "+esc(c.commune)+" · "+esc(tr("v_"+c.vehicle))+'</p><p class="meta"><b>'+esc(ratingTxt(c.id))+"</b></p>"+
+    '<div class="tags"><span class="pill '+(c.verified?"ok":"warn")+'">'+esc(c.verified?tr("verifiedM"):tr("pendingV"))+"</span></div>"+
+    '<label class="stack"><span class="meta">'+esc(tr("changePhoto"))+'</span><input type="file" id="cf-photo" accept="image/*" data-img="cr-edit"></label>'+
+    "<h3>"+esc(tr("areaPhs",{n:con.length}))+"</h3><div>"+con.map(x=>areaRow(c,x)).join("")+"</div>";
+  if(!c.verified)h+='<div class="note">'+esc(tr("needVerif"))+"</div>";
+  else{
+    h+='<label class="check"><input type="checkbox" id="cf-available" data-cf="available"'+(c.available?" checked":"")+"><span>"+esc(tr("available"))+"</span></label>"+
+      "<h3>"+esc(tr("toDeliver"))+"</h3>"+(c.available&&open.length?open.map(o=>orderCard(o,"open")).join(""):'<div class="empty">'+esc(tr("noneOpen"))+"</div>")+
+      "<h3>"+esc(tr("mine"))+"</h3>"+(mine.length?mine.map(o=>orderCard(o,"mine")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>");
+  }
+  $("crspace").innerHTML=h;
+}
+
+/* ---------- admin ---------- */
+const AD=[["home","adHome"],["ph","adPh"],["cr","adCr"],["us","adUs"],["od","adOd"],["prod","adCat"]];
+function renderAdmin(){
+  const cnt={ph:S.ph.length,cr:S.cr.length,us:S.us.length,od:S.od.length,prod:S.pr.length};
+  $("adnav").innerHTML=AD.map(a=>'<button type="button" data-ad="'+a[0]+'" aria-pressed="'+(adTab===a[0])+'">'+esc(tr(a[1]))+(cnt[a[0]]!=null?"<span>"+cnt[a[0]]+"</span>":"")+"</button>").join("");
+  $("adprod").hidden=adTab!=="prod";
+  const idt=x=>x.idType?tr("id_"+x.idType):"";
+  const pw=(kind,x)=>'<div class="meta">'+esc(tr("passL"))+": <b>"+(pwShown.has(x.id)?esc(x.pass||"—"):"••••••")+'</b> <button class="btn link" type="button" data-pwshow="'+x.id+'">'+
+    esc(tr(pwShown.has(x.id)?"hide":"show"))+'</button> · <button class="btn link" type="button" data-pwreset="'+kind+'" data-id="'+x.id+'">'+esc(tr("resetPw"))+"</button>"+
+    (kind==="ph"?"<br>"+esc(tr("salesCodeL"))+": <b>"+esc(x.salesCode||"—")+'</b> <button class="btn link" type="button" data-newcode="'+x.id+'">'+esc(tr("newCode"))+"</button>":"")+"</div>";
+  const line=(kind,x,sub,extra)=>'<div class="arow"><div class="phone">'+(x.photo?'<img class="avatar" src="'+x.photo+'" alt="">':"")+
+    (x.idImg?'<img class="idt" src="'+x.idImg+'" alt="'+esc(tr("idFile"))+'">':"")+
+    "<div><b>"+esc(x.name)+'</b><br><span class="meta">'+esc(sub.filter(Boolean).join(" · "))+"<br>"+esc(extra.filter(Boolean).join(" · "))+(x.idImg?"":" · "+esc(tr("noId")))+"</span>"+pw(kind,x)+"</div></div>"+
+    '<div class="badges"><span class="pill '+(x.verified?"ok":"warn")+'">'+esc(tr(x.verified?"verifiedM":"pendingV"))+'</span><button class="btn'+(x.verified?"":" primary")+
+    '" type="button" data-verify="'+kind+'" data-id="'+x.id+'">'+esc(tr(x.verified?"unverify":"verify"))+"</button></div></div>";
+  const phL=p=>line("ph",p,[p.commune,p.address,p.phone],[p.resp,p.lic,idt(p),tr("nProd",{n:Object.keys(S.st[p.id]||{}).length}),tr("nOrd",{n:S.od.filter(o=>o.ph===p.id).length})]);
+  const who2=x=>[x.gender?tr("g_"+x.gender):"",fmtD(x.dob)].filter(Boolean).join(", ");
+  const crL=c=>line("cr",c,[c.commune,c.phone,tr("v_"+c.vehicle),who2(c)],[idt(c),ratingTxt(c.id),tr("nLinks",{n:S.links.filter(l=>l.cr===c.id&&l.status==="accepted").length})]);
+  const usL=u=>line("us",u,[u.phone,who2(u)],[idt(u),tr("nOrd",{n:S.od.filter(o=>o.user===u.id).length})]);
+  const panel=(title,body)=>'<div class="panel"><h2>'+esc(title)+"</h2><div>"+body+"</div></div>";
+  const none='<div class="empty">'+esc(tr("noOrders"))+"</div>";
+  let h="";
+  if(adTab==="home"){
+    const pe=a=>a.filter(x=>!x.verified).length, act=S.od.filter(o=>!["done","refused","cancelled"].includes(o.status)).length;
+    const tile=(k,n,label,small)=>'<button class="tile" type="button" data-ad="'+k+'"><b>'+n+"</b><span>"+esc(label)+"</span>"+(small?"<small>"+esc(small)+"</small>":"")+"</button>";
+    const pend=S.ph.filter(x=>!x.verified).map(phL).concat(S.cr.filter(x=>!x.verified).map(crL),S.us.filter(x=>!x.verified).map(usL));
+    h='<div class="tiles">'+tile("ph",S.ph.length,tr("adPh"),pe(S.ph)?tr("nPend",{n:pe(S.ph)}):"")+tile("cr",S.cr.length,tr("adCr"),pe(S.cr)?tr("nPend",{n:pe(S.cr)}):"")+
+      tile("us",S.us.length,tr("adUs"),pe(S.us)?tr("nPend",{n:pe(S.us)}):"")+tile("od",S.od.length,tr("adOd"),act?tr("nActive",{n:act}):"")+"</div>"+
+      panel(tr("toVerify"),pend.length?pend.join(""):'<div class="empty">'+esc(tr("nothingV"))+"</div>")+
+      panel(tr("phConn")+" ("+S.ph.length+")",S.ph.slice().sort((a,b)=>a.commune.localeCompare(b.commune)).map(p=>'<div class="row"><div><b>'+esc(p.name)+"</b></div><span>"+esc(p.commune)+
+        '</span><span class="pill '+(p.verified?"ok":"warn")+'">'+esc(tr(p.verified?"verified":"pendingV"))+"</span></div>").join(""));
+  }
+  if(adTab==="ph"){const cs=[...new Set(S.ph.map(p=>p.commune))].sort(), l=S.ph.filter(p=>!adPhC||p.commune===adPhC);
+    h=panel(tr("adPh")+" ("+l.length+")",'<select id="ad-phc" data-phc aria-label="Commune"><option value="">'+esc(tr("allCommunes"))+"</option>"+
+      cs.map(c=>"<option"+(c===adPhC?" selected":"")+">"+esc(c)+"</option>").join("")+"</select>"+l.map(phL).join(""))}
+  if(adTab==="cr")h=panel(tr("adCr"),S.cr.length?S.cr.map(crL).join(""):'<div class="empty">'+esc(tr("noCr"))+"</div>");
+  if(adTab==="us")h=panel(tr("adUs"),S.us.map(usL).join(""));
+  if(adTab==="od"){
+    const fl={all:()=>true,way:o=>o.delivery&&o.status==="picked",recv:o=>o.delivery&&["received","done"].includes(o.status)}, l=S.od.filter(fl[adOdF]).sort(byNew);
+    h='<div class="panel"><h2>'+esc(tr("adOd"))+'</h2><div class="chips">'+[["all","fAll"],["way","fWay"],["recv","fRecv"]].map(a=>'<button type="button" data-odf="'+a[0]+
+      '" aria-pressed="'+(adOdF===a[0])+'">'+esc(tr(a[1]))+" ("+S.od.filter(fl[a[0]]).length+")</button>").join("")+'</div><div class="stack">'+(l.length?l.map(o=>orderCard(o,"admin")).join(""):none)+"</div></div>";
+  }
+  if(adTab==="prod")h=panel(tr("adCat"),S.pr.map(r=>'<div class="arow"><div><b>'+esc(r.name)+"</b>"+(r.rx?'<span class="rx">Rx</span>':"")+'<br><span class="meta">'+
+    esc(tr("stockedAt",{l:S.ph.filter(p=>S.st[p.id]&&S.st[p.id][r.id]&&S.st[p.id][r.id].s!=="out").map(p=>p.name+" ("+p.commune+")").join(", ")||tr("none")}))+"<br>"+
+    esc(tr("onDeliv",{n:S.od.filter(o=>orderItems(o).some(i=>i.r===r.id)&&o.delivery&&["confirmed","picked"].includes(o.status)).length}))+'</span></div><span class="pricetxt">'+money(r.base)+"</span></div>").join(""));
+  $("adview").innerHTML=h;
+}
+
+let toastTimer;
+function toast(msg){const el=$("toast");el.textContent=msg;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.hidden=true},2200)}
+const mins=v=>{const a=(v||"00:00").split(":");return +a[0]*60+ +a[1]};
+
+/* ---------- events ---------- */
+$("lang").addEventListener("change",e=>{S.lang=e.target.value;save();applyLang()});
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)showTab(b.dataset.tab)});
+$("q").addEventListener("input",e=>{q=e.target.value;renderResults()});
+["commune","opennow","delonly"].forEach(id=>$(id).addEventListener("change",renderResults));
+$("chips").addEventListener("click",e=>{const b=e.target.closest("[data-chip]");if(!b)return;q=b.dataset.chip;$("q").value=q;renderResults()});
+$("results").addEventListener("click",e=>{
+  const tg=e.target.closest("[data-toggle]"), cp=e.target.closest("[data-copy]"), od=e.target.closest("[data-order]");
+  if(tg){const id=tg.dataset.toggle;openCards.has(id)?openCards.delete(id):openCards.add(id);renderResults()}
+  if(od)openOrder(od.dataset.order);
+  if(cp){const num=cp.dataset.copy, sel=()=>{const n=cp.parentElement.querySelector(".num"),r=document.createRange();r.selectNodeContents(n);const s=getSelection();s.removeAllRanges();s.addRange(r)};
+    try{navigator.clipboard.writeText(num).then(()=>toast(tr("copied")),sel)}catch(err){sel()}}
+});
+["od-prod","od-qty","od-commune","od-del"].forEach(id=>{$(id).addEventListener("input",renderOrderForm);$(id).addEventListener("change",renderOrderForm)});
+document.addEventListener("change",e=>{const sl=e.target&&e.target.closest?e.target.closest("[data-opay]"):null;if(!sl)return;
+  const o=S.od.find(x=>x.id===sl.dataset.opay), u=me();
+  if(o&&u&&o.user===u.id&&["pending","confirmed","picked","received"].includes(o.status)&&(sl.value==="cash"||sl.value==="mm")){
+    o.pay=sl.value;(o.log=o.log||{}).payChanged=Date.now();save();renderMyOrders();toast(tr("payUpd"))}});
+$("od-cancel").addEventListener("click",()=>{orderPh=null;orderEdit=null;cart=[];$("order").hidden=true});
+$("od-add").addEventListener("click",()=>{const r=$("od-prod").value;if(!r)return;const q=Math.max(1,Math.min(20,Math.round(+$("od-qty").value||1)));
+  const it=cart.find(i=>i.r===r);if(it)it.qty=Math.min(20,it.qty+q);else cart.push({r,qty:q});$("od-qty").value=1;renderOrderForm()});
+$("od-cart").addEventListener("click",e=>{const q=e.target.closest("[data-cq]"), x=e.target.closest("[data-crm]");
+  if(q){const it=cart.find(i=>i.r===q.dataset.r);if(it){it.qty=Math.max(1,Math.min(20,it.qty+ +q.dataset.cq));renderOrderForm()}}
+  if(x){cart=cart.filter(i=>i.r!==x.dataset.crm);renderOrderForm()}});
+$("roles").addEventListener("click",e=>{const b=e.target.closest("[data-role]");if(!b)return;signRole=b.dataset.role;renderSession()});
+$("acc-form").addEventListener("submit",e=>{e.preventDefault();
+  if(!up["acc-id"]){toast(tr("needId"));return}
+  const phone=readPhone("acc"); if(!phone)return;
+  const dob=readDob("acc",18); if(!dob)return;
+  const pass=readPass("acc"); if(!pass)return;
+  const id="u"+Date.now();
+  S.us.push({id,name:capWords($("acc-name").value.trim()),phone,pass,gender:$("acc-gender").value,dob,idType:$("acc-idtype").value,idImg:up["acc-id"],verified:false});
+  e.target.reset();clearUp();login({role:"client",id})});
+$("login").addEventListener("submit",e=>{e.preventDefault();
+  const v=digits(fullPhone($("login-cc").value,$("login-phone").value)), u=S.us.find(x=>digits(x.phone)===v), p=S.ph.find(x=>digits(x.phone)===v), c=S.cr.find(x=>digits(x.phone)===v);
+  const s=!v?null:u?{role:"client",id:u.id}:p?{role:"ph",id:p.id}:c?{role:"cr",id:c.id}:null;
+  const acc=u||p||c;
+  if(!s||(acc.pass||"")!==$("login-pass").value){toast(tr("badLogin"));return}
+  $("login-pass").value="";login(s)});
+const setHash=h=>{try{history.replaceState(null,"",h||location.pathname+location.search)}catch(e){try{location.hash=h}catch(e2){}}};
+$("admin-link").addEventListener("click",()=>{gate=true;setHash("#admin");renderSession();window.scrollTo(0,0)});
+$("ad-back").addEventListener("click",()=>{gate=false;setHash("");renderSession()});
+$("adform").addEventListener("submit",e=>{e.preventDefault();
+  if($("ad-code").value.trim().toUpperCase()!==ADMIN_CODE){toast(tr("badCode"));return}
+  e.target.reset();gate=false;adTab="home";login({role:"admin"})});
+$("ad").addEventListener("click",e=>{const b=e.target.closest("[data-ad]"), f=e.target.closest("[data-odf]");
+  if(b){adTab=b.dataset.ad;renderAdmin()} if(f){adOdF=f.dataset.odf;renderAdmin()}
+  const sh=e.target.closest("[data-pwshow]"), rs=e.target.closest("[data-pwreset]"), nc=e.target.closest("[data-newcode]");
+  if(sh){const id=sh.dataset.pwshow;pwShown.has(id)?pwShown.delete(id):pwShown.add(id);renderAdmin()}
+  if(rs){const k=rs.dataset.pwreset, x=(k==="ph"?S.ph:k==="cr"?S.cr:S.us).find(a=>a.id===rs.dataset.id);
+    if(x){x.pass=genCode(6,"0123456789");pwShown.add(x.id);save();renderAdmin();toast(tr("pwReset",{p:x.pass}))}}
+  if(nc){const p=pharm(nc.dataset.newcode);if(p){p.salesCode=genCode();save();renderAdmin()}}});
+$("ad").addEventListener("change",e=>{const c=e.target.closest("[data-phc]");if(c){adPhC=c.value;renderAdmin()}});
+$("logout").addEventListener("click",()=>{gate=false;setHash("");salesOpen=null;csvText="";$("login-pass").value="";fillLast();S.session=null;save();orderPh=null;curTab=null;renderAll();window.scrollTo(0,0)});
+document.addEventListener("change",e=>{const i=e.target.closest("input[data-img]");if(!i||!i.files||!i.files[0])return;
+  const key=i.dataset.img;
+  shrink(i.files[0],/photo|edit/.test(key)?240:520,url=>{
+    if(!url){toast(tr("imgErr"));i.value="";return}
+    if(key==="cr-edit"){const w=who();if(w&&w.role==="cr"){w.x.photo=url;save();renderSession();renderCr();toast(tr("saved"))}return}
+    up[key]=url;const pv=$("prev-"+key);if(pv){pv.src=url;pv.hidden=false}})});
+$("cr-commune").addEventListener("change",renderNear);
+$("order").addEventListener("submit",e=>{e.preventDefault();
+  const p=pharm(orderPh), u=me(); if(!p||!u)return;
+  if(!cart.length){toast(tr("needItem"));return}
+  const del=!!p.delivery&&$("od-del").checked, f=del?feeFor(p,$("od-commune").value):{fee:0,km:0}; if(!f)return;
+  const data={items:cart.map(i=>({r:i.r,qty:i.qty,price:stock(p.id,i.r).p})),delivery:del,commune:del?$("od-commune").value:"",address:del?$("od-address").value.trim():"",
+    pay:$("od-pay").value,fee:f.fee,km:f.km};
+  let code, upd=false;
+  if(orderEdit){const o=S.od.find(x=>x.id===orderEdit);
+    if(o&&o.status==="pending"&&o.user===u.id){Object.assign(o,data);delete o.r;delete o.qty;delete o.price;code=o.code;upd=true}}
+  else{code=newRef();S.od.push(Object.assign({id:"o"+Date.now(),code,ph:p.id,user:u.id,buyer:u.name,phone:u.phone,status:"pending",courier:null,t:Date.now(),log:{pending:Date.now()}},data))}
+  save();orderPh=null;orderEdit=null;cart=[];$("order").hidden=true;renderMyOrders();renderPh();renderCr();
+  if(code)toast(tr(upd?"orderUpd":"orderSent",{c:code}));
+  $("myorders").scrollIntoView({block:"start",behavior:"smooth"})});
+
+$("ph-commune").addEventListener("change",e=>{const c=COM[e.target.value];pick=c?{lat:c[0],lng:c[1]}:null;pickManual=false;renderPick()});
+$("pick").addEventListener("click",e=>{const b=$("pick").getBoundingClientRect();
+  const x=(e.clientX-b.left)/b.width*400, y=(e.clientY-b.top)/b.height*260;
+  pick={lat:-4.29-y/260*0.17,lng:15.20+x/400*0.26};pickManual=true;renderPick()});
+$("newph").addEventListener("submit",e=>{e.preventDefault();
+  const commune=$("ph-commune").value, c=COM[commune]; if(!c)return;
+  if(!up["ph-id"]){toast(tr("needId"));return}
+  const phone=readPhone("ph"); if(!phone)return;
+  const pass=readPass("ph"); if(!pass)return;
+  const id="p"+Date.now(), loc=pick||{lat:c[0],lng:c[1]};
+  S.ph.push({id,name:capWords($("ph-name").value.trim()),commune,address:cap1($("ph-address").value.trim()),phone,pass,salesCode:genCode(),
+    o:mins($("ph-open").value),c:mins($("ph-close").value),h24:$("ph-24").checked,delivery:$("ph-del").checked,guard:false,verified:false,
+    resp:capWords($("ph-resp").value.trim()),lic:$("ph-lic").value.trim(),lat:loc.lat,lng:loc.lng,idType:$("ph-idtype").value,idImg:up["ph-id"]});
+  e.target.reset();pick=null;pickManual=false;clearUp();login({role:"ph",id},tr("phSaved"))});
+$("mph").addEventListener("change",renderPh);
+$("salesbox").addEventListener("click",e=>{const b=e.target.closest("[data-sales]"), p=pharm($("mph").value);if(!b||!p)return;
+  const a=b.dataset.sales;
+  if(a==="open"){if($("sales-code").value.trim().toUpperCase()===String(p.salesCode||"").toUpperCase()&&p.salesCode){salesOpen=p.id;renderSales()}else toast(tr("badCode"))}
+  if(a==="lock"){salesOpen=null;csvText="";renderSales()}
+  if(a==="dl")dlSales(p)});
+$("addstock").addEventListener("submit",e=>{e.preventDefault();const p=pharm($("mph").value);if(!p)return;
+  const name=$("st-name").value.trim(), price=Math.max(0,Math.round(+$("st-price").value||0)); if(!name)return;
+  let r=S.pr.find(x=>norm(x.name)===norm(name));
+  if(!r){r={id:"r"+Date.now(),name:cap1(name),base:price,rx:false};S.pr.push(r)}
+  if(!S.st[p.id])S.st[p.id]={};
+  if(S.st[p.id][r.id]){toast(tr("inStockDup"));return}
+  S.st[p.id][r.id]={s:$("st-status").value,p:price,u:Date.now()};
+  save();e.target.reset();fillSelects();renderChips();renderPh();renderResults();toast(tr("added"))});
+$("ph").addEventListener("change",e=>{
+  const pf=e.target.closest("[data-pf]"), pi=e.target.closest("[data-price]"), p=pharm($("mph").value); if(!p)return;
+  if(pf){p[pf.dataset.pf]=pf.checked;save();renderResults();toast(tr("saved"))}
+  if(pi){setStock(p.id,pi.dataset.price,{p:Math.max(0,Math.round(+pi.value||0))});toast(tr("saved"))}});
+$("stocklist").addEventListener("click",e=>{
+  const pe=e.target.closest("[data-priceedit]"), ps=e.target.closest("[data-pricesave]");
+  if(pe){editPrice=pe.dataset.priceedit;renderPh();const i=$("price-"+editPrice);if(i&&i.focus)i.focus();return}
+  if(ps){const i=$("price-"+ps.dataset.pricesave);setStock($("mph").value,ps.dataset.pricesave,{p:Math.max(0,Math.round(+i.value||0))});editPrice=null;renderPh();toast(tr("saved"));return}
+  const b=e.target.closest("[data-s]");if(!b)return;
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  setStock($("mph").value,b.dataset.r,{s:b.dataset.s});toast(tr("saved"))});
+
+$("newcr").addEventListener("submit",e=>{e.preventDefault();
+  if(!up["cr-id"]){toast(tr("needId"));return}
+  const phone=readPhone("cr"); if(!phone)return;
+  const dob=readDob("cr",18); if(!dob)return;
+  const pass=readPass("cr"); if(!pass)return;
+  const id="c"+Date.now();
+  S.cr.push({id,name:capWords($("cr-name").value.trim()),phone,pass,gender:$("cr-gender").value,dob,commune:$("cr-commune").value,vehicle:$("cr-vehicle").value,
+    idType:$("cr-idtype").value,idImg:up["cr-id"],photo:up["cr-photo"]||null,available:true,verified:false});
+  e.target.reset();clearUp();login({role:"cr",id},tr("crSaved"))});
+$("mcr").addEventListener("change",renderCr);
+$("cr").addEventListener("change",e=>{const cf=e.target.closest("[data-cf]"), c=cour($("mcr").value);
+  if(cf&&c){c.available=cf.checked;save();renderCr()}});
+
+// order status changes (pharmacy confirms or declines, courier accepts or delivers)
+document.addEventListener("click",e=>{
+  const st=e.target.closest("[data-ost]"), ac=e.target.closest("[data-accept]"), vf=e.target.closest("[data-verify]");
+  if(st){const o=S.od.find(x=>x.id===st.dataset.o);if(o){o.status=st.dataset.ost;(o.log=o.log||{})[o.status]=Date.now();save();renderMyOrders();renderPh();renderCr();toast(stLabel(o))}}
+  const oe=e.target.closest("[data-oedit]"), oc=e.target.closest("[data-ocancel]");
+  if(oe){const o=S.od.find(x=>x.id===oe.dataset.oedit);if(o&&o.status==="pending")openOrder(o.ph,o)}
+  if(oc){const o=S.od.find(x=>x.id===oc.dataset.ocancel), u=me();
+    if(o&&u&&o.user===u.id&&o.status==="pending"){
+      if(cancelArm!==o.id){cancelArm=o.id;renderMyOrders()}
+      else{cancelArm=null;o.status="cancelled";(o.log=o.log||{}).cancelled=Date.now();if(orderEdit===o.id){orderEdit=null;orderPh=null;cart=[];$("order").hidden=true}
+        save();renderMyOrders();renderPh();toast(stLabel(o))}}}
+  const pfb=e.target.closest("[data-prof]"), rt=e.target.closest("[data-rate]");
+  if(pfb){const id=pfb.dataset.prof;openProf.has(id)?openProf.delete(id):openProf.add(id);renderMyOrders()}
+  if(rt){const o=S.od.find(x=>x.id===rt.dataset.o), u=me();
+    if(o&&u&&o.user===u.id&&!o.rating&&["received","done"].includes(o.status)){o.rating=+rt.dataset.rate;save();renderMyOrders();toast(tr("thanksRate"))}}
+  const rq=e.target.closest("[data-req]"), lk=e.target.closest("[data-link]");
+  if(rq){const w=who();if(w&&w.role==="cr"&&w.x.verified&&!link(w.x.id,rq.dataset.req)){S.links.push({cr:w.x.id,ph:rq.dataset.req,status:"pending"});save();renderCr();toast(tr("reqSent"))}}
+  if(lk){const w=who(), c=cour(lk.dataset.cr);if(w&&w.role==="ph"&&c){const l=link(c.id,w.x.id), a=lk.dataset.link;
+    if(l&&a==="remove")S.links.splice(S.links.indexOf(l),1);
+    else if(l&&(a==="refused"||c.verified))l.status=a;
+    save();renderPh();toast(tr("saved"))}}
+  if(ac){const o=S.od.find(x=>x.id===ac.dataset.accept), c=cour($("mcr").value);
+    if(o&&c&&c.verified&&o.status==="confirmed"&&!o.courier&&(link(c.id,o.ph)||{}).status==="accepted"){o.status="picked";o.courier=c.id;(o.log=o.log||{}).picked=Date.now();save();renderMyOrders();renderPh();renderCr();toast(tr("st_picked"))}}
+  if(vf){const k=vf.dataset.verify, x=(k==="ph"?S.ph:k==="cr"?S.cr:S.us).find(a=>a.id===vf.dataset.id);if(x){x.verified=!x.verified;save();renderAll()}}
+});
+$("addpr").addEventListener("submit",e=>{e.preventDefault();
+  S.pr.push({id:"r"+Date.now(),name:$("pr-name").value.trim(),base:Math.max(0,Math.round(+$("pr-price").value||0)),rx:$("pr-rx").checked});
+  save();e.target.reset();renderAll();toast(tr("added"))});
+$("reset").addEventListener("click",()=>{
+  if(!resetArmed){resetArmed=true;$("reset").textContent=tr("resetConfirm");return}
+  resetArmed=false;const lang=S.lang;S=seed();S.lang=lang;save();openCards.clear();orderPh=null;$("reset").textContent=tr("reset");applyLang();toast(tr("saved"))});
+
+document.addEventListener("input",e=>{const i=e.target;if(!i||!i.dataset||typeof i.value!=="string")return;const v=i.value;let n=v;
+  if("digits" in i.dataset)n=v.replace(/\D/g,"").slice(0,10);
+  else if("cc" in i.dataset)n="+"+v.replace(/\D/g,"").slice(0,4);
+  else if("cap" in i.dataset)n=capWords(v);
+  else if("cap1" in i.dataset)n=cap1(v);
+  if(n!==v){const p=i.selectionStart;i.value=n;try{if(n.length===v.length)i.setSelectionRange(p,p)}catch(err){}}});
+try{gate=location.hash==="#admin";window.addEventListener("hashchange",()=>{if(!who()){gate=location.hash==="#admin";renderSession()}})}catch(e){}
+applyLang();fillLast();
+</script>
+</body>
+</html>
