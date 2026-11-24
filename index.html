@@ -317,6 +317,7 @@ input[type=file]{font-size:14px;max-width:100%}
     <div class="search">
       <label class="big" for="q" data-i18n="searchLabel"></label>
       <input type="search" id="q" autocomplete="off">
+      <p class="meta" id="search-hint" hidden></p>
       <div class="chips" id="chips"></div>
       <div class="filters">
         <select id="commune" aria-label="Commune"></select>
@@ -641,6 +642,9 @@ changePay:["Modifier le mode de paiement","Bongola ndenge ya kofuta","Badilisha 
 payUpd:["Mode de paiement modifié","Ndenge ya kofuta ebongwani","Njia ya malipo imebadilishwa","Payment method changed"],
 haveAcc:["Vous avez déjà un compte ?","Ozali na compte deja?","Una akaunti tayari?","Already have an account?"],
 noAcc2:["Pas encore de compte ?","Ozali naino na compte te?","Huna akaunti bado?","No account yet?"],
+hintFuzzy:["Résultats les plus proches de « {a} » : {b}","Oyo ekokani na « {a} » : {b}","Matokeo yanayokaribia « {a} »: {b}","Closest matches for “{a}”: {b}"],
+hintSyn:["« {a} » correspond à : {b}","« {a} » ezali : {b}","« {a} » ni sawa na: {b}","“{a}” matches: {b}"],
+hintTopic:["Produits liés à « {a} ». Demandez conseil à votre pharmacien.","Bakisi oyo etali « {a} ». Tuna farmasie na yo toli.","Bidhaa zinazohusu « {a} ». Uliza ushauri kwa mfamasia wako.","Products related to “{a}”. Ask your pharmacist for advice."],
 approx:["approximative","ya pene","ya makadirio","approximate"],placed:["placée par vous","otie yango","umeiweka","placed by you"]
 };
 
@@ -839,10 +843,50 @@ function renderChips(){
 function prodRow(p,r){const s=stock(p.id,r.id);
   return '<div class="row"><div>'+esc(r.name)+(r.rx?'<span class="rx" title="'+esc(tr("rx"))+'">Rx</span>':"")+(s.u?"<small>"+esc(ago(s.u))+"</small>":"")+
     '</div><span class="pr">'+(s.s==="out"?"":money(s.p))+'</span><span class="pill '+pillCls[s.s]+'">'+esc(tr(s.s))+"</span></div>"}
-function matchedProducts(){const nq=norm(q.trim());return nq?S.pr.filter(r=>norm(r.name).includes(nq)):[]}
+// ---- smart search: typing mistakes, brand names, everyday words
+const SYN={doliprane:"paracetamol",efferalgan:"paracetamol",dafalgan:"paracetamol",panadol:"paracetamol",acetaminophen:"paracetamol",
+  coartem:"artemether",lumartem:"artemether",artequin:"artemether",coarsucam:"artemether",
+  augmentin:"amoxicilline",clamoxyl:"amoxicilline",amoxil:"amoxicilline",amoxicillin:"amoxicilline",
+  flagyl:"metronidazole",advil:"ibuprofene",brufen:"ibuprofene",nurofen:"ibuprofene",ibuprofen:"ibuprofene",
+  ventoline:"salbutamol",ventolin:"salbutamol",glucophage:"metformine",metformin:"metformine",amlor:"amlodipine",norvasc:"amlodipine",
+  zentel:"albendazole",ciproxine:"ciprofloxacine",ciprofloxacin:"ciprofloxacine",cipro:"ciprofloxacine",
+  insulin:"insuline",ors:"sro",quinimax:"quinine",vitamin:"vitamine"};
+const TOPICS=[
+  {w:["palu","paludisme","malaria"],p:["artemether","quinine","tdr","paludisme"]},
+  {w:["douleur","douleurs","fievre","fever","pain","maux de tete","mal de tete"],p:["paracetamol","ibuprofene"]},
+  {w:["diarrhee","diarrhea","deshydratation","rehydratation"],p:["sro","zinc"]},
+  {w:["diabete","diabetes","sucre"],p:["metformine","insuline"]},
+  {w:["tension","hypertension"],p:["amlodipine"]},
+  {w:["asthme","asthma"],p:["salbutamol"]},
+  {w:["vers","vermifuge","deworming"],p:["albendazole"]},
+  {w:["antibiotique","antibiotiques","antibiotic","antibiotics","infection"],p:["amoxicilline","ciprofloxacine","metronidazole"]},
+  {w:["vitamines","vitamins"],p:["vitamine"]}];
+const toks=s=>norm(s).split(/[^a-z0-9]+/).filter(Boolean);
+function editDist(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let p=[],c=[],pp=[];for(let j=0;j<=b.length;j++)p[j]=j;
+  for(let i=1;i<=a.length;i++){c=[i];let lo=i;for(let j=1;j<=b.length;j++){const k=a[i-1]===b[j-1]?0:1;let v=Math.min(p[j]+1,c[j-1]+1,p[j-1]+k);
+    if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])v=Math.min(v,pp[j-2]+1);c[j]=v;if(v<lo)lo=v}if(lo>max)return max+1;pp=p;p=c}return p[b.length]}
+const near=(t,w)=>t.length>=4&&w.length>=4&&editDist(t,w,t.length>=7?2:1)<=(t.length>=7?2:1);
+let lastSmart={q:null,list:[],hint:null};
+function smartSearch(raw){
+  const nq=norm(raw.trim()); if(!nq)return {list:[],hint:null};
+  const byKw=kws=>S.pr.filter(r=>{const n=norm(r.name);return kws.some(k=>n.includes(k))});
+  const exact=S.pr.filter(r=>norm(r.name).includes(nq));
+  const qt=toks(raw).filter(t=>!/^\d+$/.test(t));
+  const topic=TOPICS.find(tp=>tp.w.some(w=>w.includes(" ")?nq.includes(w):qt.some(t=>t===w||near(t,w))));
+  if(topic){const l=exact.concat(byKw(topic.p).filter(r=>!exact.includes(r)));if(l.length)return {list:l,hint:{k:"hintTopic",v:{a:raw.trim()}}}}
+  if(exact.length)return {list:exact,hint:null};
+  for(const t of qt){let key=SYN[t]?t:Object.keys(SYN).find(k=>near(t,k));
+    if(key){const l=byKw([SYN[key]]);if(l.length)return {list:l,hint:{k:"hintSyn",v:{a:raw.trim(),b:l.map(r=>r.name).join(", ")}}}}}
+  let best=0,list=[];
+  S.pr.forEach(r=>{const pt=toks(r.name);let sc=0;qt.forEach(t=>{if(t.length>=3&&pt.some(w=>w.startsWith(t)||near(t,w)))sc++});
+    if(sc>best){best=sc;list=[r]}else if(sc&&sc===best)list.push(r)});
+  return best?{list,hint:{k:"hintFuzzy",v:{a:raw.trim(),b:list.map(r=>r.name).join(", ")}}}:{list:[],hint:null};
+}
+function matchedProducts(){if(lastSmart.q!==q||lastSmart.n!==S.pr.length){lastSmart=Object.assign({q,n:S.pr.length},smartSearch(q))}return lastSmart.list}
 function renderResults(){
   const nq=norm(q.trim()), commune=$("commune").value, onlyOpen=$("opennow").checked, onlyDel=$("delonly").checked;
-  const matched=matchedProducts();
+  const matched=matchedProducts(), hint=lastSmart.hint;
+  $("search-hint").hidden=!(nq&&hint); if(nq&&hint)$("search-hint").textContent=tr(hint.k,hint.v);
   const adm=isAdmin();
   let list=S.ph.filter(p=>(p.verified||adm)&&(!commune||p.commune===commune)&&(!onlyOpen||isOpen(p))&&(!onlyDel||p.delivery));
   const rank={in:0,low:1,out:2}, best={};
