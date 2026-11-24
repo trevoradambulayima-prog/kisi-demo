@@ -141,6 +141,7 @@ select,input[type=text],input[type=search],input[type=number],input[type=time],i
 .seg button[aria-pressed="true"][data-s="out"]{background:var(--bad-bg);color:var(--bad)}
 .pricein{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .pricein input{width:110px;min-height:38px;padding:6px 10px}
+#histbox .acts label{flex:1 1 140px}
 details>summary{cursor:pointer;font:700 20px/1.2 var(--display)}
 form.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end}
 form.grid label:not(.check){display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
@@ -361,6 +362,7 @@ input[type=file]{font-size:14px;max-width:100%}
     </form>
 
     <div class="panel" id="myorders" hidden><h2 data-i18n="myOrders"></h2><div class="stack" id="myorders-list"></div></div>
+    <div id="hist-client"></div>
 
     <figure class="plan">
       <svg id="plan" viewBox="0 0 400 260" role="img" aria-label="Kinshasa"></svg>
@@ -397,6 +399,7 @@ input[type=file]{font-size:14px;max-width:100%}
       <h2 data-i18n="salesTitle"></h2>
       <div class="stack" id="salesbox"></div>
     </div>
+    <div id="hist-ph"></div>
   </section>
 
   <!-- COURIER -->
@@ -406,6 +409,7 @@ input[type=file]{font-size:14px;max-width:100%}
       <select id="mcr" aria-label="Livreur" hidden></select>
       <div class="stack" id="crspace"></div>
     </div>
+    <div id="hist-cr"></div>
   </section>
 
   <!-- ADMIN -->
@@ -662,6 +666,26 @@ hintSyn:["« {a} » correspond à : {b}","« {a} » ezali : {b}","« {a} » ni s
 hintTopic:["Produits liés à « {a} ». Demandez conseil à votre pharmacien.","Bakisi oyo etali « {a} ». Tuna farmasie na yo toli.","Bidhaa zinazohusu « {a} ». Uliza ushauri kwa mfamasia wako.","Products related to “{a}”. Ask your pharmacist for advice."],
 sugIn:["dans {n} pharmacie(s)","na bafarmasi {n}","katika maduka {n}","at {n} pharmacies"],
 sugNone:["en rupture","esili","imeisha","out of stock"],
+olderNote:["{n} commande(s) terminée(s) il y a plus de 30 jours : voir « Historique et factures » plus bas.","Ba commande {n} esilaki mikolo 30 eleki: tala « Historique et factures » na se.","Maagizo {n} yaliyokamilika zaidi ya siku 30 zilizopita: ona « Historique et factures » chini.","{n} order(s) finished over 30 days ago: see “History and invoices” below."],
+histTitle:["Historique et factures","Lisolo mpe ba facture","Historia na ankara","History and invoices"],
+histHelpC:["Tout ce que vous avez acheté sur les 12 derniers mois. Choisissez une période, puis téléchargez vos factures.","Nyonso osombaki na sanza 12 eleki. Pona ntango, sima zwa ba facture na yo.","Vyote ulivyonunua katika miezi 12 iliyopita. Chagua kipindi, kisha pakua ankara zako.","Everything you bought in the last 12 months. Choose a period, then download your invoices."],
+histHelpP:["Tout ce que votre pharmacie a vendu sur les 12 derniers mois. Choisissez une période, puis téléchargez les factures.","Nyonso farmasi na yo etekaki na sanza 12 eleki. Pona ntango, sima zwa ba facture.","Vyote duka lako liliuza katika miezi 12 iliyopita. Chagua kipindi, kisha pakua ankara.","Everything your pharmacy sold in the last 12 months. Choose a period, then download the invoices."],
+histHelpL:["Toutes vos livraisons des 12 derniers mois. Choisissez une période, puis téléchargez le relevé.","Ba livraison na yo nyonso ya sanza 12 eleki. Pona ntango, sima zwa relevé.","Usafirishaji wako wote wa miezi 12 iliyopita. Chagua kipindi, kisha pakua taarifa.","All your deliveries in the last 12 months. Choose a period, then download the statement."],
+histFrom:["Du","Banda","Kuanzia","From"],histTo:["Au","Kino","Hadi","To"],
+histMax:["La période peut remonter jusqu'à 12 mois.","Ntango ekoki kozonga kino sanza 12.","Kipindi kinaweza kurudi hadi miezi 12.","The period can go back up to 12 months."],
+histShow:["Afficher","Lakisa","Onyesha","Show"],histNone:["Aucune commande sur cette période.","Commande moko te na ntango oyo.","Hakuna agizo katika kipindi hiki.","No order in this period."],
+histCount:["{n} commande(s) sur la période","Ba commande {n} na ntango oyo","Maagizo {n} katika kipindi","{n} order(s) in the period"],
+histTotC:["Total acheté (commandes terminées)","Nyonso osombi (ba commande esili)","Jumla iliyonunuliwa (maagizo yaliyokamilika)","Total bought (completed orders)"],
+histTotP:["Total vendu (produits, commandes terminées)","Nyonso etekami (bakisi, ba commande esili)","Jumla iliyouzwa (bidhaa, maagizo yaliyokamilika)","Total sold (products, completed orders)"],
+histTotL:["Total gagné (livraisons terminées)","Nyonso ozwi (ba livraison esili)","Jumla uliyopata (usafirishaji uliokamilika)","Total earned (completed deliveries)"],
+histDl:["Télécharger les factures (terminées)","Zwa ba facture (esili)","Pakua ankara (zilizokamilika)","Download the invoices (completed)"],
+invTitle:["Factures Kisi","Ba facture Kisi","Ankara za Kisi","Kisi invoices"],invPeriod:["Période","Ntango","Kipindi","Period"],
+invGen:["Document créé par Kisi le {d}","Mokanda esalemi na Kisi le {d}","Hati imetengenezwa na Kisi tarehe {d}","Document created by Kisi on {d}"],
+invNo:["Facture","Facture","Ankara","Invoice"],invDate:["Date de commande","Mokolo ya commande","Tarehe ya agizo","Order date"],
+invPh:["Pharmacie","Farmasi","Duka la dawa","Pharmacy"],invCl:["Client","Client","Mteja","Customer"],invCr:["Livreur","Livreur","Msafirishaji","Courier"],
+invAddr:["Adresse de livraison","Adresi ya livraison","Anwani ya kupeleka","Delivery address"],
+invProduct:["Produit","Kisi","Bidhaa","Product"],invQty:["Qté","Motango","Idadi","Qty"],invUnit:["Prix unitaire","Ntalo ya moko","Bei ya kimoja","Unit price"],
+invLine:["Total","Nyonso","Jumla","Total"],invFee:["Livraison","Livraison","Usafirishaji","Delivery"],
 approx:["approximative","ya pene","ya makadirio","approximate"],placed:["placée par vous","otie yango","umeiweka","placed by you"]
 };
 
@@ -690,7 +714,7 @@ const SEED_PR=[["paracetamol","Paracétamol 500 mg",1000,0],["amoxicilline","Amo
  ["albendazole","Albendazole 400 mg",1200,0],["metformine","Metformine 500 mg",4500,1],["amlodipine","Amlodipine 5 mg",5500,1],
  ["insuline","Insuline NPH 10 ml",28000,1],["salbutamol","Salbutamol inhalateur",9000,1],["vitc","Vitamine C 500 mg",1500,0]];
 const POPULAR=["paracetamol","al","quinine","amoxicilline","sro","insuline"];
-const KEY="kisi.v8";
+const KEY="kisi.v9";
 
 function hash(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return x>>>0}
 function seed(){
@@ -716,8 +740,11 @@ function seed(){
   od.push(mk(5,"p1","al",2,us[0],"Gombe",1,2500,"mm","done",1500));
   Object.assign(od[4],{courier:"c1",rating:4,log:{pending:now-1500*60000,received:now-1460*60000,done:now-1455*60000}});
   od[4].items.push({r:"sro",qty:3,price:st.p1.sro.p});
+  const old=(n,days,r,qty,u,commune,pay,rating)=>{const t0=now-days*86400000, o=mk(n,"p1",r,qty,u,commune,2,2500,pay,"done",days*1440);
+    o.code="KIS-"+new Date(t0).toISOString().slice(2,10).replace(/-/g,"")+"-000"+n; Object.assign(o,{courier:"c1",rating,log:{pending:t0,confirmed:t0+600000,picked:t0+900000,received:t0+2700000,done:t0+3000000}}); return o};
+  od.push(old(6,45,"quinine",2,us[0],"Lingwala","cash",5), old(7,200,"amoxicilline",1,us[0],"Gombe","mm",4));
   const links=[{cr:"c1",ph:"p1",status:"accepted"},{cr:"c1",ph:"p5",status:"pending"},{cr:"c2",ph:"p6",status:"accepted"},{cr:"c2",ph:"p5",status:"pending"},{cr:"c3",ph:"p2",status:"accepted"}];
-  return {lang:"fr",ph,pr,st,cr,od,us,links,seq:5};
+  return {lang:"fr",ph,pr,st,cr,od,us,links,seq:7};
 }
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.ph&&s.pr&&s.st&&s.cr&&s.od&&s.us&&s.links)return s}catch(e){}return seed()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -853,7 +880,7 @@ function fillSelects(){
   const w=who(); if(w&&w.role==="ph")$("mph").value=w.x.id; if(w&&w.role==="cr")$("mcr").value=w.x.id;
   keep($("od-pay"),'<option value="cash">'+esc(tr("payCash"))+'</option><option value="mm">'+esc(tr("payMM"))+"</option>");
 }
-function renderAll(){fillSelects();renderChips();renderSession();renderResults();renderOrderForm();renderMyOrders();renderNear();renderPick();renderPh();renderSales();renderCr();renderAdmin()}
+function renderAll(){setTimeout(renderHist,0);fillSelects();renderChips();renderSession();renderResults();renderOrderForm();renderMyOrders();renderNear();renderPick();renderPh();renderSales();renderCr();renderAdmin()}
 function renderChips(){
   $("chips").innerHTML=POPULAR.map(id=>{const r=prod(id);return r?'<button type="button" data-chip="'+esc(r.name)+'">'+esc(r.name)+"</button>":""}).join("");
 }
@@ -1063,9 +1090,9 @@ function orderCard(o,role){
 }
 const byNew=(a,b)=>b.t-a.t;
 function renderMyOrders(){
-  const u=me(), mine=u?S.od.filter(o=>o.user===u.id).sort(byNew):[];
-  $("myorders").hidden=!mine.length;
-  $("myorders-list").innerHTML=mine.map(o=>orderCard(o,"buyer")).join("");
+  const u=me(), all=u?S.od.filter(o=>o.user===u.id).sort(byNew):[], mine=all.filter(isRecent);
+  $("myorders").hidden=!all.length;
+  $("myorders-list").innerHTML=mine.map(o=>orderCard(o,"buyer")).join("")+olderNote(all,mine);
 }
 
 /* ---------- pharmacy desk ---------- */
@@ -1091,8 +1118,8 @@ function renderPh(){
   $("phreq").innerHTML=req.length?req.map(c=>crRow(c,'<div class="acts">'+(c.verified?lbtn("accepted",c,tr("accept"),true):"")+lbtn("refused",c,tr("refuse"))+"</div>")+
     (c.verified?"":'<div class="note">'+esc(tr("notVerifCr"))+"</div>")).join(""):'<div class="empty">'+esc(tr("noReq"))+"</div>";
   $("phcrs").innerHTML=acc.length?acc.map(c=>crRow(c,lbtn("remove",c,tr("unverify")))).join(""):'<div class="empty">'+esc(tr("noCrs"))+"</div>";
-  const od=S.od.filter(o=>o.ph===p.id).sort(byNew);
-  $("phorders").innerHTML=od.length?od.map(o=>orderCard(o,"ph")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>";
+  const odAll=S.od.filter(o=>o.ph===p.id).sort(byNew), od=odAll.filter(isRecent);
+  $("phorders").innerHTML=(od.length?od.map(o=>orderCard(o,"ph")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>")+olderNote(odAll,od);
   const mine=S.pr.filter(r=>S.st[p.id]&&S.st[p.id][r.id]);
   $("catalogue").innerHTML=S.pr.filter(r=>!mine.includes(r)).map(r=>'<option value="'+esc(r.name)+'">').join("");
   $("stocklist").innerHTML=!mine.length?'<div class="empty">'+esc(tr("noStock"))+"</div>":mine.map(r=>{const s=stock(p.id,r.id);
@@ -1141,7 +1168,7 @@ function renderCr(){
   const c=cour($("mcr").value);
   if(!c){$("crspace").innerHTML='<div class="empty">'+esc(tr("noCr"))+"</div>";return}
   const con=connected(c.commune), ids=new Set(S.links.filter(l=>l.cr===c.id&&l.status==="accepted").map(l=>l.ph));
-  const open=S.od.filter(o=>o.status==="confirmed"&&o.delivery&&!o.courier&&ids.has(o.ph)).sort(byNew), mine=S.od.filter(o=>o.courier===c.id).sort(byNew);
+  const open=S.od.filter(o=>o.status==="confirmed"&&o.delivery&&!o.courier&&ids.has(o.ph)).sort(byNew), mineAll=S.od.filter(o=>o.courier===c.id).sort(byNew), mine=mineAll.filter(isRecent);
   let h='<p class="meta">'+esc(c.phone)+" · "+esc(c.commune)+" · "+esc(tr("v_"+c.vehicle))+'</p><p class="meta"><b>'+esc(ratingTxt(c.id))+"</b></p>"+
     '<div class="tags"><span class="pill '+(c.verified?"ok":"warn")+'">'+esc(c.verified?tr("verifiedM"):tr("pendingV"))+"</span></div>"+
     '<label class="stack"><span class="meta">'+esc(tr("changePhoto"))+'</span><input type="file" id="cf-photo" accept="image/*" data-img="cr-edit"></label>'+
@@ -1150,7 +1177,7 @@ function renderCr(){
   else{
     h+='<label class="check"><input type="checkbox" id="cf-available" data-cf="available"'+(c.available?" checked":"")+"><span>"+esc(tr("available"))+"</span></label>"+
       "<h3>"+esc(tr("toDeliver"))+"</h3>"+(c.available&&open.length?open.map(o=>orderCard(o,"open")).join(""):'<div class="empty">'+esc(tr("noneOpen"))+"</div>")+
-      "<h3>"+esc(tr("mine"))+"</h3>"+(mine.length?mine.map(o=>orderCard(o,"mine")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>");
+      "<h3>"+esc(tr("mine"))+"</h3>"+(mine.length?mine.map(o=>orderCard(o,"mine")).join(""):'<div class="empty">'+esc(tr("noOrders"))+"</div>")+olderNote(mineAll,mine);
   }
   $("crspace").innerHTML=h;
 }
@@ -1370,6 +1397,82 @@ $("newcr").addEventListener("submit",e=>{e.preventDefault();
 $("mcr").addEventListener("change",renderCr);
 $("cr").addEventListener("change",e=>{const cf=e.target.closest("[data-cf]"), c=cour($("mcr").value);
   if(cf&&c){c.available=cf.checked;save();renderCr()}});
+
+/* ----- 30-day lists, 12-month history and invoice file ----- */
+const DAY=86400000, ACTIVE=["pending","confirmed","picked","received"];
+const lastAct=o=>Math.max(o.t||0,...Object.values(o.log||{}).filter(v=>typeof v==="number"));
+const isRecent=o=>ACTIVE.includes(o.status)||Date.now()-lastAct(o)<=30*DAY;
+const olderNote=(all,shown)=>all.length>shown.length?'<p class="meta">'+esc(tr("olderNote",{n:all.length-shown.length}))+"</p>":"";
+const dayISO=t=>new Date(t+3600000).toISOString().slice(0,10);
+const yearAgo=()=>{const d=new Date(Date.now()+3600000);d.setUTCFullYear(d.getUTCFullYear()-1);return d.toISOString().slice(0,10)};
+let hist={open:false,from:null,to:null,shown:false};
+function histOrders(w){
+  if(w.role==="client")return S.od.filter(o=>o.user===w.x.id);
+  if(w.role==="ph")return S.od.filter(o=>o.ph===w.x.id);
+  if(w.role==="cr")return S.od.filter(o=>o.courier===w.x.id);
+  return [];
+}
+function histRange(){const min=yearAgo(), max=todayISO();
+  let f=hist.from||min, t=hist.to||max; if(f<min)f=min; if(t>max)t=max; if(f>t){const x=f;f=t;t=x} return {f,t,min,max}}
+function histList(w){const {f,t}=histRange();
+  return histOrders(w).filter(o=>{const d=dayISO(o.t);return d>=f&&d<=t}).sort(byNew)}
+const histAmount=(w,o)=>w.role==="ph"?orderSub(o):w.role==="cr"?o.fee:orderSub(o)+o.fee;
+function renderHist(){
+  const w=who(), ids={client:"hist-client",ph:"hist-ph",cr:"hist-cr"};
+  Object.values(ids).forEach(id=>{const e=$(id);if(e)e.innerHTML=""});
+  if(!w||!ids[w.role])return;
+  const key=w.role+":"+(w.x?w.x.id:""); if(hist.key!==key)hist={open:false,from:null,to:null,shown:false,key};
+  const box=$(ids[w.role]), {f,t,min,max}=histRange(), R=w.role==="client"?"C":w.role==="ph"?"P":"L";
+  let h='<details class="panel" id="histbox"'+(hist.open?" open":"")+'><summary>'+esc(tr("histTitle"))+'</summary><p>'+esc(tr("histHelp"+R))+"</p>"+
+    '<div class="acts"><label class="stack"><span class="meta">'+esc(tr("histFrom"))+'</span><input type="date" id="hist-from" min="'+min+'" max="'+max+'" value="'+f+'"></label>'+
+    '<label class="stack"><span class="meta">'+esc(tr("histTo"))+'</span><input type="date" id="hist-to" min="'+min+'" max="'+max+'" value="'+t+'"></label></div>'+
+    '<p class="meta">'+esc(tr("histMax"))+'</p><div class="acts"><button class="btn primary" type="button" data-hist="show">'+esc(tr("histShow"))+"</button></div>";
+  if(hist.shown){
+    const list=histList(w), done=list.filter(o=>o.status==="done"), total=done.reduce((a,o)=>a+histAmount(w,o),0);
+    h+='<div class="sum"><div><span>'+esc(tr("histCount",{n:list.length}))+"</span><span></span></div>"+
+      '<div class="tot"><span>'+esc(tr("histTot"+R))+"</span><span>"+money(total)+"</span></div></div>";
+    h+=list.length?'<div class="stack">'+list.map(o=>{const p=pharm(o.ph), other=w.role==="client"?(p?p.name:""):w.role==="ph"?o.buyer:((p?p.name:"")+" → "+o.commune);
+      return '<div class="ord"><div class="head"><strong>'+esc(o.code)+'</strong><span class="pricetxt">'+money(histAmount(w,o))+'</span></div><div class="meta">'+esc(fmtT(o.t)+" "+new Date(o.t+3600000).toISOString().slice(0,4))+" · "+esc(other)+
+        '</div><div class="tags"><span class="pill '+stCls[o.status]+'">'+esc(stLabel(o))+"</span></div></div>"}).join("")+"</div>":'<div class="empty">'+esc(tr("histNone"))+"</div>";
+    if(done.length)h+='<div class="acts"><button class="btn" type="button" data-hist="dl">'+esc(tr("histDl"))+"</button></div>";
+  }
+  box.innerHTML=h+"</details>";
+}
+function invoiceHtml(w){
+  const {f,t}=histRange(), list=histList(w).filter(o=>o.status==="done").reverse(), R=w.role==="client"?"C":w.role==="ph"?"P":"L";
+  const css="body{font:14px/1.5 Arial,sans-serif;color:#15211b;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 6px}"+
+    ".inv{border:1px solid #ccd;border-radius:8px;padding:14px;margin:16px 0;page-break-inside:avoid}table{width:100%;border-collapse:collapse;margin:8px 0}"+
+    "th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #e3e6e3}td.n,th.n{text-align:right}.meta{color:#5d6b63}.tot td{font-weight:bold;border-bottom:0}";
+  let h='<!doctype html><html lang="'+S.lang+'"><head><meta charset="utf-8"><title>'+esc(tr("invTitle"))+"</title><style>"+css+"</style></head><body>"+
+    "<h1>"+esc(tr("invTitle"))+'</h1><p class="meta">'+esc(w.name)+" · "+esc(tr("invPeriod"))+" : "+esc(f)+" → "+esc(t)+"<br>"+esc(tr("invGen",{d:fmtDT(Date.now())}))+"</p>";
+  let total=0;
+  list.forEach(o=>{const p=pharm(o.ph)||{name:"—",address:"",phone:""}, c=o.courier?cour(o.courier):null, its=orderItems(o), sub=orderSub(o); total+=histAmount(w,o);
+    h+='<div class="inv"><h2>'+esc(tr("invNo"))+" "+esc(o.code)+'</h2><p class="meta">'+esc(tr("invDate"))+" : "+esc(fmtDT(o.t))+(o.log&&o.log.done?" · "+esc(tr("st_done"))+" : "+esc(fmtDT(o.log.done)):"")+"</p>"+
+      "<p><b>"+esc(tr("invPh"))+"</b> : "+esc(p.name)+(p.address?", "+esc(p.address):"")+(p.commune?", "+esc(p.commune):"")+(p.phone?" · "+esc(p.phone):"")+"<br>"+
+      "<b>"+esc(tr("invCl"))+"</b> : "+esc(o.buyer||"—")+(o.phone?" · "+esc(o.phone):"")+(o.delivery?"<br><b>"+esc(tr("invAddr"))+"</b> : "+esc(o.address||"")+", "+esc(o.commune||""):"")+
+      (c?"<br><b>"+esc(tr("invCr"))+"</b> : "+esc(c.name)+" · "+esc(c.phone):"")+"</p>"+
+      '<table><tr><th>'+esc(tr("invProduct"))+'</th><th class="n">'+esc(tr("invQty"))+'</th><th class="n">'+esc(tr("invUnit"))+'</th><th class="n">'+esc(tr("invLine"))+"</th></tr>"+
+      its.map(i=>{const r=prod(i.r)||{name:"?"};return "<tr><td>"+esc(r.name)+'</td><td class="n">'+i.qty+'</td><td class="n">'+money(i.price)+'</td><td class="n">'+money(i.price*i.qty)+"</td></tr>"}).join("")+
+      '<tr><td colspan="3">'+esc(tr("subTot"))+'</td><td class="n">'+money(sub)+"</td></tr>"+
+      (o.delivery?'<tr><td colspan="3">'+esc(tr("invFee"))+'</td><td class="n">'+money(o.fee)+"</td></tr>":"")+
+      '<tr class="tot"><td colspan="3">'+esc(tr("total"))+'</td><td class="n">'+money(sub+o.fee)+"</td></tr></table>"+
+      '<p class="meta">'+esc(tr("pay"))+" : "+esc(tr(o.pay==="mm"?"payMM":"payCash"))+"</p></div>"});
+  h+=list.length?"<h2>"+esc(tr("histTot"+R))+" "+money(total)+"</h2>":"<p>"+esc(tr("histNone"))+"</p>";
+  return h+"</body></html>";
+}
+async function saveFile(name,data,mime){
+  try{const d=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(d){try{await d.save({filename:name,data});toast(tr("dlOk"))}catch(e){}return}}catch(e){}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast(tr("dlOk"))}catch(e){toast(tr("srvErr"))}
+}
+document.addEventListener("toggle",e=>{if(e.target&&e.target.id==="histbox")hist.open=e.target.open},true);
+document.addEventListener("change",e=>{const i=e.target;if(!i||!i.id)return;
+  if(i.id==="hist-from"){hist.from=i.value;hist.shown=false;renderHist()} if(i.id==="hist-to"){hist.to=i.value;hist.shown=false;renderHist()}});
+document.addEventListener("click",e=>{const b=e.target.closest?e.target.closest("[data-hist]"):null;if(!b)return;const w=who();if(!w)return;
+  if(b.dataset.hist==="show"){hist.from=$("hist-from").value;hist.to=$("hist-to").value;
+    if(hist.from&&hist.from<yearAgo())toast(tr("histMax"));hist.shown=true;renderHist()}
+  if(b.dataset.hist==="dl"){const {f,t}=histRange();saveFile("factures-kisi-"+f+"_"+t+".html",invoiceHtml(w),"text/html;charset=utf-8")}});
 
 // order status changes (pharmacy confirms or declines, courier accepts or delivers)
 document.addEventListener("click",e=>{
