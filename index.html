@@ -173,6 +173,7 @@ textarea{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;background:v
 .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .roles button{text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
 .roles button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.roles button:hover{border-color:var(--accent)}
 .roles span{font-size:13px;color:var(--muted)}
 input[type=file]{font-size:14px;max-width:100%}
 @media (prefers-reduced-motion:no-preference){.btn,.chips button,.tabs button{transition:background .15s,border-color .15s}}
@@ -200,16 +201,18 @@ input[type=file]{font-size:14px;max-width:100%}
 
   <!-- ACCOUNT: the page starts here -->
   <section class="view" id="auth">
-    <div class="panel">
-      <h2 data-i18n="authTitle"></h2>
-      <p data-i18n="authHelp"></p>
+    <div class="panel" id="signup">
+      <div id="auth-backrow" hidden><button class="btn link" type="button" data-go="" style="gap:6px"><span aria-hidden="true">←</span><span data-i18n="back"></span></button></div>
+      <h2 id="auth-title"></h2>
+      <p id="auth-help" data-i18n="authHelp"></p>
       <div class="roles" id="roles">
         <button type="button" data-role="client" aria-pressed="true"><b data-i18n="role_client"></b><span data-i18n="roleClientD"></span></button>
         <button type="button" data-role="ph" aria-pressed="false"><b data-i18n="role_ph"></b><span data-i18n="rolePhD"></span></button>
         <button type="button" data-role="cr" aria-pressed="false"><b data-i18n="role_cr"></b><span data-i18n="roleCrD"></span></button>
       </div>
+      <p class="meta" id="to-login"><span data-i18n="haveAcc"></span> <button class="btn link" type="button" data-go="connexion" data-i18n="loginBtn"></button></p>
 
-      <form class="grid" id="acc-form">
+      <form class="grid" id="acc-form" hidden>
         <label><span data-i18n="fullName"></span><input type="text" id="acc-name" data-cap required></label>
         <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
           <input type="text" id="acc-cc" data-cc value="+243" maxlength="5" inputmode="tel" required>
@@ -274,7 +277,8 @@ input[type=file]{font-size:14px;max-width:100%}
       </form>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="loginpanel" hidden>
+      <div><button class="btn link" type="button" data-go="" style="gap:6px"><span aria-hidden="true">←</span><span data-i18n="back"></span></button></div>
       <h2 data-i18n="loginTitle"></h2>
       <form class="grid" id="login">
         <div class="telwrap"><span data-i18n="phoneNum"></span><div class="tel">
@@ -285,6 +289,7 @@ input[type=file]{font-size:14px;max-width:100%}
         <div class="full"><button class="btn primary" type="submit" data-i18n="loginBtn"></button></div>
         <p class="full meta" data-i18n="forgot"></p>
       </form>
+      <p class="meta"><span data-i18n="noAcc2"></span> <button class="btn link" type="button" data-go="" data-i18n="authTitle"></button></p>
       <p data-i18n="demoAcc"></p>
     </div>
   </section>
@@ -634,6 +639,8 @@ paidL:["Paiement reçu par le livreur","Livreur azwi mbongo","Msafirishaji amepo
 cashShort:["espèces","mbongo na maboko","pesa taslimu","cash"],
 changePay:["Modifier le mode de paiement","Bongola ndenge ya kofuta","Badilisha njia ya malipo","Change the payment method"],
 payUpd:["Mode de paiement modifié","Ndenge ya kofuta ebongwani","Njia ya malipo imebadilishwa","Payment method changed"],
+haveAcc:["Vous avez déjà un compte ?","Ozali na compte deja?","Una akaunti tayari?","Already have an account?"],
+noAcc2:["Pas encore de compte ?","Ozali naino na compte te?","Huna akaunti bado?","No account yet?"],
 approx:["approximative","ya pene","ya makadirio","approximate"],placed:["placée par vous","otie yango","umeiweka","placed by you"]
 };
 
@@ -879,13 +886,24 @@ function renderPlan(best,shown){
 function showTab(t){curTab=t;
   document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t));
   ["find","ph","cr","ad"].forEach(id=>{$(id).hidden=id!==t})}
+// sign-up pages: first page = profile choice; #client, #pharmacie, #livreur = form; #connexion = sign in; #admin
+let authStep="roles";
+const ROUTES={client:["form","client"],pharmacie:["form","ph"],livreur:["form","cr"],connexion:["login"],admin:["gate"]}, ROLE_HASH={client:"client",ph:"pharmacie",cr:"livreur"};
+const curHash=()=>{try{return decodeURIComponent((location.hash||"").slice(1))}catch(e){return ""}};
+function setRoute(h){const r=ROUTES[h];gate=false;authStep="roles";if(r){if(r[0]==="gate")gate=true;else{authStep=r[0];if(r[1])signRole=r[1]}}}
+function go(h){const before=curHash();if(before!==h){try{location.hash=h}catch(e){}}
+  if(before===h||curHash()!==h){setRoute(h);renderSession();window.scrollTo(0,0)}}
 function renderSession(){
   const w=who(), tabs=w?TABS[w.role]:[];
-  $("auth").hidden=!!w||gate; $("adgate").hidden=!!w||!gate; $("foot").hidden=!!w||gate; $("mebar").hidden=!w;
+  $("auth").hidden=!!w||gate; $("adgate").hidden=!!w||!gate; $("foot").hidden=!!w||gate||authStep!=="login"; $("mebar").hidden=!w;
   document.querySelectorAll(".tabs button").forEach(b=>{b.hidden=!tabs.includes(b.dataset.tab)});
   document.querySelector(".tabs").hidden=tabs.length<2;
-  document.querySelectorAll("#roles button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.role===signRole));
-  $("acc-form").hidden=signRole!=="client"; $("newph").hidden=signRole!=="ph"; $("newcr").hidden=signRole!=="cr";
+  document.querySelectorAll("#roles button").forEach(b=>b.setAttribute("aria-pressed","false"));
+  const fm=authStep==="form";
+  $("signup").hidden=authStep==="login"; $("loginpanel").hidden=authStep!=="login";
+  $("roles").hidden=$("auth-help").hidden=$("to-login").hidden=authStep!=="roles"; $("auth-backrow").hidden=!fm;
+  $("auth-title").textContent=tr("authTitle")+(fm?" · "+tr("role_"+signRole):"");
+  $("acc-form").hidden=!(fm&&signRole==="client"); $("newph").hidden=!(fm&&signRole==="ph"); $("newcr").hidden=!(fm&&signRole==="cr");
   if(!w){["find","ph","cr","ad"].forEach(id=>{$(id).hidden=true});return}
   showTab(tabs.includes(curTab)?curTab:tabs[0]);
   $("me-name").textContent=w.name; $("me-role").textContent=tr("role_"+w.role)+(w.x&&w.x.phone?" · "+w.x.phone:"");
@@ -893,7 +911,7 @@ function renderSession(){
   const v=$("me-ver"); v.hidden=!w.x;
   if(w.x){v.className="pill "+(w.x.verified?"ok":"warn"); v.textContent=tr(w.x.verified?(w.role==="ph"?"verified":"verifiedM"):"pendingV")}
 }
-function login(s,msg){S.session=s;save();curTab=null;orderPh=null;salesOpen=null;csvText="";renderAll();const w=who();
+function login(s,msg){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}authStep="roles";S.session=s;save();curTab=null;orderPh=null;salesOpen=null;csvText="";renderAll();const w=who();
   if(w&&w.x&&w.x.phone){rememberPhone(w.x.phone);fillLast()}toast(msg||tr("welcome",{n:w?w.name:""}));window.scrollTo(0,0)}
 function clearUp(){for(const k in up)delete up[k];document.querySelectorAll("img.thumb").forEach(x=>{x.hidden=true;x.removeAttribute("src")})}
 function shrink(file,max,cb){const fr=new FileReader();fr.onerror=()=>cb(null);
@@ -1138,7 +1156,8 @@ $("od-add").addEventListener("click",()=>{const r=$("od-prod").value;if(!r)retur
 $("od-cart").addEventListener("click",e=>{const q=e.target.closest("[data-cq]"), x=e.target.closest("[data-crm]");
   if(q){const it=cart.find(i=>i.r===q.dataset.r);if(it){it.qty=Math.max(1,Math.min(20,it.qty+ +q.dataset.cq));renderOrderForm()}}
   if(x){cart=cart.filter(i=>i.r!==x.dataset.crm);renderOrderForm()}});
-$("roles").addEventListener("click",e=>{const b=e.target.closest("[data-role]");if(!b)return;signRole=b.dataset.role;renderSession()});
+$("roles").addEventListener("click",e=>{const b=e.target.closest("[data-role]");if(b)go(ROLE_HASH[b.dataset.role])});
+document.addEventListener("click",e=>{const g=e.target.closest?e.target.closest("[data-go]"):null;if(g)go(g.dataset.go)});
 $("acc-form").addEventListener("submit",e=>{e.preventDefault();
   if(!up["acc-id"]){toast(tr("needId"));return}
   const phone=readPhone("acc"); if(!phone)return;
@@ -1154,8 +1173,8 @@ $("login").addEventListener("submit",e=>{e.preventDefault();
   if(!s||(acc.pass||"")!==$("login-pass").value){toast(tr("badLogin"));return}
   $("login-pass").value="";login(s)});
 const setHash=h=>{try{history.replaceState(null,"",h||location.pathname+location.search)}catch(e){try{location.hash=h}catch(e2){}}};
-$("admin-link").addEventListener("click",()=>{gate=true;setHash("#admin");renderSession();window.scrollTo(0,0)});
-$("ad-back").addEventListener("click",()=>{gate=false;setHash("");renderSession()});
+$("admin-link").addEventListener("click",()=>go("admin"));
+$("ad-back").addEventListener("click",()=>go("connexion"));
 $("adform").addEventListener("submit",e=>{e.preventDefault();
   if($("ad-code").value.trim().toUpperCase()!==ADMIN_CODE){toast(tr("badCode"));return}
   e.target.reset();gate=false;adTab="home";login({role:"admin"})});
@@ -1167,7 +1186,7 @@ $("ad").addEventListener("click",e=>{const b=e.target.closest("[data-ad]"), f=e.
     if(x){x.pass=genCode(6,"0123456789");pwShown.add(x.id);save();renderAdmin();toast(tr("pwReset",{p:x.pass}))}}
   if(nc){const p=pharm(nc.dataset.newcode);if(p){p.salesCode=genCode();save();renderAdmin()}}});
 $("ad").addEventListener("change",e=>{const c=e.target.closest("[data-phc]");if(c){adPhC=c.value;renderAdmin()}});
-$("logout").addEventListener("click",()=>{gate=false;setHash("");salesOpen=null;csvText="";$("login-pass").value="";fillLast();S.session=null;save();orderPh=null;curTab=null;renderAll();window.scrollTo(0,0)});
+$("logout").addEventListener("click",()=>{setHash("#connexion");setRoute("connexion");salesOpen=null;csvText="";$("login-pass").value="";fillLast();S.session=null;save();orderPh=null;curTab=null;renderAll();window.scrollTo(0,0)});
 document.addEventListener("change",e=>{const i=e.target.closest("input[data-img]");if(!i||!i.files||!i.files[0])return;
   const key=i.dataset.img;
   shrink(i.files[0],/photo|edit/.test(key)?240:520,url=>{
@@ -1280,7 +1299,7 @@ document.addEventListener("input",e=>{const i=e.target;if(!i||!i.dataset||typeof
   else if("cap" in i.dataset)n=capWords(v);
   else if("cap1" in i.dataset)n=cap1(v);
   if(n!==v){const p=i.selectionStart;i.value=n;try{if(n.length===v.length)i.setSelectionRange(p,p)}catch(err){}}});
-try{gate=location.hash==="#admin";window.addEventListener("hashchange",()=>{if(!who()){gate=location.hash==="#admin";renderSession()}})}catch(e){}
+try{setRoute(curHash());window.addEventListener("hashchange",()=>{if(!who()){setRoute(curHash());renderSession();window.scrollTo(0,0)}})}catch(e){}
 applyLang();fillLast();
 </script>
 </body>
